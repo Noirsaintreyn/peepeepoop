@@ -11932,6 +11932,69 @@ def api_train_level_detector():
         print(f"ERROR in /api/train-level-detector: {error_trace}")
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@app.route('/api/backtest', methods=['POST'])
+def api_backtest():
+    """
+    Run walk-forward backtest for level detection algorithms and HOD/LOD predictions.
+
+    POST body (JSON):
+    {
+        "ticker": "SPY",
+        "timeframe": "1d",
+        "lookback_bars": 200,
+        "eval_bars": 5,
+        "step_bars": 1,
+        "tolerance_pct": 0.15,
+        "max_eval_points": 100,
+        "mode": "full"  // "levels", "hodlod", or "full"
+    }
+    """
+    auth_error = require_auth()
+    if auth_error:
+        return jsonify({'success': False, 'error': auth_error['error']}), auth_error['code']
+
+    try:
+        from backtest_engine import backtest_levels, backtest_hodlod, run_full_backtest
+
+        data = request.get_json() or {}
+        ticker = data.get('ticker', 'SPY')
+        timeframe = data.get('timeframe', '1d')
+        lookback_bars = int(data.get('lookback_bars', 200))
+        eval_bars = int(data.get('eval_bars', 5))
+        step_bars = int(data.get('step_bars', 1))
+        tolerance_pct = float(data.get('tolerance_pct', 0.15))
+        max_eval_points = int(data.get('max_eval_points', 100))
+        mode = data.get('mode', 'full')
+
+        print(f"Running backtest: ticker={ticker}, timeframe={timeframe}, mode={mode}, "
+              f"lookback={lookback_bars}, eval_bars={eval_bars}, max_points={max_eval_points}")
+
+        if mode == 'levels':
+            result = backtest_levels(
+                ticker=ticker, timeframe=timeframe, lookback_bars=lookback_bars,
+                eval_bars=eval_bars, step_bars=step_bars, tolerance_pct=tolerance_pct,
+                max_eval_points=max_eval_points,
+            )
+        elif mode == 'hodlod':
+            result = backtest_hodlod(
+                ticker=ticker, timeframe=timeframe, lookback_bars=lookback_bars,
+                step_bars=step_bars, max_eval_points=max_eval_points,
+            )
+        else:
+            result = run_full_backtest(
+                ticker=ticker, timeframe=timeframe, lookback_bars=lookback_bars,
+                eval_bars=eval_bars, step_bars=step_bars, tolerance_pct=tolerance_pct,
+                max_eval_points=max_eval_points,
+            )
+
+        return jsonify(sanitize_for_json(result)), 200
+
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"ERROR in /api/backtest: {error_trace}")
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 @app.route('/api/train-deepsupp-levels', methods=['POST'])
 def api_train_deepsupp_levels():
     """
@@ -12330,6 +12393,6 @@ except Exception as e:
     # Don't crash - let the app start and retry on first request
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001)          
+    app.run(host='0.0.0.0', port=5001)                    
 
 
