@@ -417,15 +417,14 @@ def init_db():
             
             conn.commit()
             
-            # Admin account: rey / flood
-            rey_password = hash_password('flood')
+            # Admin account: rey / admin
+            rey_password = hash_password('admin')
             try:
                 c.execute("INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
                           ('rey', 'rey@degendiscovery.com', rey_password, 1))
                 conn.commit()
                 print("✓ Admin account (rey) created")
             except sqlite3.IntegrityError:
-                # Update existing admin password if it exists
                 c.execute("UPDATE users SET password = ? WHERE username = 'rey' AND is_admin = 1", (rey_password,))
                 conn.commit()
                 print("✓ Admin account (rey) already exists, password updated")
@@ -434,29 +433,33 @@ def init_db():
             c.execute("DELETE FROM users WHERE username = 'admin' AND is_admin = 1")
             conn.commit()
             
-            # Test account 1: test1 / pw
-            test1_password = hash_password('pw')
-            try:
-                c.execute("INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
-                          ('test1', 'test1@degendiscovery.com', test1_password, 0))
-                conn.commit()
-                print("✓ Test account 1 (test1) created")
-            except sqlite3.IntegrityError:
-                c.execute("UPDATE users SET password = ? WHERE username = 'test1'", (test1_password,))
-                conn.commit()
-                print("✓ Test account 1 (test1) already exists, password updated")
+            # Remove old test accounts if they exist
+            c.execute("DELETE FROM users WHERE username IN ('test1', 'test2')")
+            conn.commit()
             
-            # Test account 2: test2 / pw
-            test2_password = hash_password('pw')
+            # Account 2: user1 / pw
+            user1_password = hash_password('pw')
             try:
                 c.execute("INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
-                          ('test2', 'test2@degendiscovery.com', test2_password, 0))
+                          ('user1', 'user1@degendiscovery.com', user1_password, 0))
                 conn.commit()
-                print("✓ Test account 2 (test2) created")
+                print("✓ Account (user1) created")
             except sqlite3.IntegrityError:
-                c.execute("UPDATE users SET password = ? WHERE username = 'test2'", (test2_password,))
+                c.execute("UPDATE users SET password = ? WHERE username = 'user1'", (user1_password,))
                 conn.commit()
-                print("✓ Test account 2 (test2) already exists, password updated")
+                print("✓ Account (user1) already exists, password updated")
+            
+            # Account 3: user2 / 67
+            user2_password = hash_password('67')
+            try:
+                c.execute("INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
+                          ('user2', 'user2@degendiscovery.com', user2_password, 0))
+                conn.commit()
+                print("✓ Account (user2) created")
+            except sqlite3.IntegrityError:
+                c.execute("UPDATE users SET password = ? WHERE username = 'user2'", (user2_password,))
+                conn.commit()
+                print("✓ Account (user2) already exists, password updated")
         # Connection auto-closes here via context manager
         
         conn.close()
