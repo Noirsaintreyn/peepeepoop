@@ -123,9 +123,9 @@ class LSTMForecast {
         if (formattedData.error) {
             container.innerHTML = `
                 <div class="lstm-forecast-error">
-                    <h3>⚠️ Forecast Error</h3>
+                    <h3>Forecast Error</h3>
                     <p>${formattedData.error}</p>
-                    ${formattedData.suggestion ? `<p class="suggestion">💡 ${formattedData.suggestion}</p>` : ''}
+                    ${formattedData.suggestion ? `<p class="suggestion">${formattedData.suggestion}</p>` : ''}
                 </div>
             `;
             return;
@@ -133,12 +133,12 @@ class LSTMForecast {
 
         const target = formattedData.target;
         const isUp = target.move >= 0;
-        const confidenceColor = target.confidence > 0.7 ? '#10b981' : target.confidence > 0.5 ? '#f59e0b' : '#ef4444';
+        const confidenceColor = target.confidence > 0.7 ? '#6fcf97' : target.confidence > 0.5 ? '#f2c94c' : '#eb5757';
 
         container.innerHTML = `
             <div class="lstm-forecast-container">
                 <div class="lstm-forecast-header">
-                    <h3>🎯 ${formattedData.question}</h3>
+                    <h3>${formattedData.question}</h3>
                     <span class="model-badge">${formattedData.modelUsed}</span>
                 </div>
 
@@ -171,7 +171,7 @@ class LSTMForecast {
 
                 ${formattedData.closestLevel ? `
                     <div class="lstm-forecast-level">
-                        <div class="level-label">🎯 Closest Level</div>
+                        <div class="level-label">Closest Level</div>
                         <div class="level-info">
                             <span class="level-price">$${formattedData.closestLevel.price?.toFixed(2) || 'N/A'}</span>
                             ${formattedData.closestLevel.strength ? `
@@ -182,7 +182,7 @@ class LSTMForecast {
                 ` : ''}
 
                 <div class="lstm-forecast-bounds">
-                    <div class="bounds-header">📊 Theoretical Bounds</div>
+                    <div class="bounds-header">Theoretical Bounds</div>
                     <div class="bounds-grid">
                         <div class="bound-item">
                             <div class="bound-label">Pre-market HOD</div>
@@ -204,7 +204,7 @@ class LSTMForecast {
                 </div>
 
                 <div class="lstm-forecast-levels">
-                    <div class="levels-header">🔍 Levels Detected</div>
+                    <div class="levels-header">Levels Detected</div>
                     <div class="levels-grid">
                         <div class="level-type">HDBSCAN: ${formattedData.levels.hdbscan}</div>
                         <div class="level-type">OPTICS: ${formattedData.levels.optics}</div>
@@ -217,7 +217,7 @@ class LSTMForecast {
 
                 ${formattedData.attention && formattedData.attention.weights ? `
                     <div class="lstm-forecast-attention">
-                        <div class="attention-header">👁️ Attention Focus</div>
+                        <div class="attention-header">Attention Focus</div>
                         <div class="attention-info">
                             Most important bar: ${formattedData.attention.most_important_bar}
                         </div>
@@ -231,115 +231,137 @@ class LSTMForecast {
 // CSS Styles (add to your stylesheet or inline)
 const LSTM_FORECAST_STYLES = `
 .lstm-forecast-container {
-    background: #1a1a1a;
-    border-radius: 12px;
-    padding: 20px;
-    color: #e5e5e5;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    padding: 32px;
+    color: #e8e6e3;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .lstm-forecast-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .lstm-forecast-header h3 {
     margin: 0;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.25rem;
-    color: #fff;
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: 0.02em;
 }
 
 .model-badge {
-    background: #3b82f6;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px 12px;
+    border-radius: 1px;
 }
 
 .lstm-forecast-target {
-    margin: 20px 0;
+    margin: 24px 0;
 }
 
 .target-price {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 28px;
+    padding: 32px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .target-label {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin-bottom: 8px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 12px;
 }
 
 .target-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #fff;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 3rem;
+    font-weight: 300;
+    color: #ffffff;
     margin: 8px 0;
+    letter-spacing: -0.01em;
 }
 
 .target-move {
-    font-size: 1.25rem;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 6px 16px;
     display: inline-block;
+    border-radius: 1px;
 }
 
 .target-move.up {
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.1);
+    color: #6fcf97;
+    border: 1px solid rgba(111, 207, 151, 0.15);
 }
 
 .target-move.down {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
+    color: #eb5757;
+    border: 1px solid rgba(235, 87, 87, 0.15);
 }
 
 .target-metrics {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-top: 20px;
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .metric {
     text-align: center;
-    padding: 12px;
-    background: #252525;
-    border-radius: 8px;
+    padding: 20px 12px;
+    background: #0a0a0a;
 }
 
 .metric-label {
-    font-size: 0.75rem;
-    color: #9ca3af;
-    margin-bottom: 4px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 8px;
 }
 
 .metric-value {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #fff;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: 0.02em;
 }
 
 .lstm-forecast-level {
-    margin: 20px 0;
-    padding: 16px;
-    background: #252525;
-    border-radius: 8px;
-    border-left: 4px solid #3b82f6;
+    margin: 24px 0;
+    padding: 20px 24px;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .level-label {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin-bottom: 8px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 12px;
 }
 
 .level-info {
@@ -349,97 +371,123 @@ const LSTM_FORECAST_STYLES = `
 }
 
 .level-price {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #fff;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: #ffffff;
 }
 
 .level-strength {
-    font-size: 0.875rem;
-    color: #9ca3af;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.05em;
 }
 
 .lstm-forecast-bounds,
 .lstm-forecast-levels,
 .lstm-forecast-attention {
-    margin: 20px 0;
-    padding: 16px;
-    background: #252525;
-    border-radius: 8px;
+    margin: 24px 0;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 2px;
 }
 
 .bounds-header,
 .levels-header,
 .attention-header {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin-bottom: 12px;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 16px;
 }
 
 .bounds-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .bound-item {
-    padding: 8px;
-    background: #1a1a1a;
-    border-radius: 6px;
+    padding: 16px;
+    background: #0a0a0a;
 }
 
 .bound-label {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-bottom: 4px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.25);
+    margin-bottom: 6px;
 }
 
 .bound-value {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: 0.02em;
 }
 
 .levels-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 8px;
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .level-type {
-    padding: 8px;
-    background: #1a1a1a;
-    border-radius: 6px;
-    font-size: 0.875rem;
+    padding: 12px 16px;
+    background: #0a0a0a;
+    font-size: 0.8rem;
     text-align: center;
-    color: #e5e5e5;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 300;
+    letter-spacing: 0.02em;
 }
 
 .attention-info {
-    font-size: 0.875rem;
-    color: #e5e5e5;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 300;
+    letter-spacing: 0.02em;
 }
 
 .lstm-forecast-error {
-    padding: 20px;
-    background: #1a1a1a;
-    border-radius: 12px;
-    border-left: 4px solid #ef4444;
+    padding: 32px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 2px solid #eb5757;
+    border-radius: 2px;
 }
 
 .lstm-forecast-error h3 {
-    color: #ef4444;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+    font-size: 1.1rem;
+    color: #eb5757;
     margin-top: 0;
+    margin-bottom: 12px;
 }
 
 .lstm-forecast-error p {
-    color: #e5e5e5;
+    color: rgba(255, 255, 255, 0.5);
     margin: 8px 0;
+    font-size: 0.85rem;
+    font-weight: 300;
+    line-height: 1.6;
 }
 
 .suggestion {
-    color: #f59e0b !important;
+    color: rgba(255, 255, 255, 0.4) !important;
     font-style: italic;
 }
 `;
