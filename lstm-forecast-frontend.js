@@ -211,7 +211,6 @@ class LSTMForecast {
                         <div class="level-type">Interaction: ${formattedData.levels.interaction}</div>
                         <div class="level-type">ML-Confluence: ${formattedData.levels.ml_confluence}</div>
                         <div class="level-type">Multiscale: ${formattedData.levels.multiscale}</div>
-                        <div class="level-type">DeepSupp: ${formattedData.levels.deepsupp || 0}</div>
                     </div>
                 </div>
 
