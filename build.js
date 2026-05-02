@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const publicDir = path.join(__dirname, 'public');
-if (!fs.existsSync(publicDir)) {
-  fs.mkdirSync(publicDir);
+const distDir = path.join(__dirname, 'dist');
+if (!fs.existsSync(distDir)) {
+  fs.mkdirSync(distDir);
 }
 
 const frontendFiles = [
@@ -14,14 +14,14 @@ const frontendFiles = [
 for (const file of frontendFiles) {
   fs.copyFileSync(
     path.join(__dirname, file),
-    path.join(publicDir, file)
+    path.join(distDir, file)
   );
 }
 
 // Copy lstm-forecast-example.html as index.html so root URL works
 fs.copyFileSync(
   path.join(__dirname, 'lstm-forecast-example.html'),
-  path.join(publicDir, 'index.html')
+  path.join(distDir, 'index.html')
 );
 
-console.log('Build complete: frontend files copied to public/');
+console.log('Build complete: frontend files copied to dist/');
