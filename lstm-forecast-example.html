@@ -124,10 +124,12 @@
         }
 
         .hero-desc {
-            font-size: 0.9rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6em;
             font-weight: 300;
-            line-height: 1.8;
-            color: rgba(255, 255, 255, 0.45);
+            font-style: italic;
+            color: rgba(232, 230, 227, 0.45);
+            letter-spacing: 0.04em;
             margin-bottom: 48px;
             max-width: 420px;
         }
@@ -349,16 +351,8 @@
         <div class="hero-bg"></div>
         <div class="hero-content">
             <div class="hero-text">
-                <div class="hero-label">Neural Network Price Prediction</div>
-                <h1 class="hero-title">
-                    Advanced<br>
-                    <em>Price Forecast</em>
-                </h1>
-                <p class="hero-desc">
-                    Level-based LSTM analysis combining HDBSCAN clustering, 
-                    attention mechanisms, and multi-scale confluence detection 
-                    for precise market forecasting.
-                </p>
+                <h1 class="hero-title">L'argent parle.</h1>
+                <p class="hero-desc">Nous traduisons.</p>
                 <div class="divider" style="margin: 0;"></div>
             </div>
 
@@ -384,14 +378,7 @@
                             <option value="1d">1 Day</option>
                         </select>
                     </div>
-                    <div class="control-group">
-                        <label for="lookback">Lookback Window</label>
-                        <input type="number" id="lookback" value="20" min="10" max="100">
-                    </div>
-                    <div class="control-group">
-                        <label for="apiUrl">API Endpoint</label>
-                        <input type="text" id="apiUrl" value="http://localhost:5001" placeholder="API Base URL">
-                    </div>
+
                     <div class="control-group full-width">
                         <button class="btn" id="getForecast">Get Forecast</button>
                     </div>
@@ -876,8 +863,8 @@
         btn.addEventListener('click', async () => {
             const ticker = document.getElementById('ticker').value.trim();
             const timeframe = document.getElementById('timeframe').value;
-            const lookback = parseInt(document.getElementById('lookback').value);
-            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const lookback = 20;
+            const apiUrl = '';
 
             if (!ticker) {
                 alert('Please enter a ticker symbol');
