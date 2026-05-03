@@ -598,6 +598,63 @@
     letter-spacing: 0.02em;
 }
 
+.bound-value.green {
+    color: #6fcf97;
+}
+
+.bound-value.red {
+    color: #eb5757;
+}
+
+.level-list-section {
+    margin-top: 16px;
+}
+
+.level-list-header {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.level-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    font-size: 0.8rem;
+}
+
+.level-row-price {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.level-row-type {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.75rem;
+    font-weight: 300;
+}
+
+.level-row-str {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    text-align: right;
+}
+
+.level-row-dist {
+    font-size: 0.75rem;
+    font-weight: 400;
+    text-align: right;
+    min-width: 55px;
+}
+
 .levels-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -723,12 +780,20 @@
                     closestLevel: answer.closest_level,
                     attention: answer.attention_focus,
                     bounds: {
+                        hod1std: bounds.hod_1std,
+                        lod1std: bounds.lod_1std,
+                        hod2std: bounds.hod_2std,
+                        lod2std: bounds.lod_2std,
+                        hod3std: bounds.hod_3std,
+                        lod3std: bounds.lod_3std,
                         hodPM: bounds.hod_premarket,
                         lodPM: bounds.lod_premarket,
                         hodID: bounds.hod_intraday,
                         lodID: bounds.lod_intraday
                     },
                     levels: levels,
+                    allLevels: forecastData.all_levels || [],
+                    currentPrice: answer.target_price / (1 + answer.target_pct_move / 100),
                     modelUsed: forecastData.model_used
                 };
             }
@@ -812,6 +877,32 @@
                         <div class="lstm-forecast-bounds">
                             <div class="bounds-header">Theoretical Bounds</div>
                             <div class="bounds-grid">
+                                ${formattedData.bounds.hod1std ? `
+                                <div class="bound-item">
+                                    <div class="bound-label">HOD 1σ</div>
+                                    <div class="bound-value green">$${formattedData.bounds.hod1std.toFixed(2)}</div>
+                                </div>
+                                <div class="bound-item">
+                                    <div class="bound-label">LOD 1σ</div>
+                                    <div class="bound-value red">$${formattedData.bounds.lod1std.toFixed(2)}</div>
+                                </div>
+                                <div class="bound-item">
+                                    <div class="bound-label">HOD 2σ</div>
+                                    <div class="bound-value green">$${formattedData.bounds.hod2std.toFixed(2)}</div>
+                                </div>
+                                <div class="bound-item">
+                                    <div class="bound-label">LOD 2σ</div>
+                                    <div class="bound-value red">$${formattedData.bounds.lod2std.toFixed(2)}</div>
+                                </div>
+                                <div class="bound-item">
+                                    <div class="bound-label">HOD 3σ</div>
+                                    <div class="bound-value green">$${formattedData.bounds.hod3std.toFixed(2)}</div>
+                                </div>
+                                <div class="bound-item">
+                                    <div class="bound-label">LOD 3σ</div>
+                                    <div class="bound-value red">$${formattedData.bounds.lod3std.toFixed(2)}</div>
+                                </div>
+                                ` : ''}
                                 <div class="bound-item">
                                     <div class="bound-label">Pre-market HOD</div>
                                     <div class="bound-value">$${formattedData.bounds.hodPM.toFixed(2)}</div>
@@ -840,6 +931,26 @@
                                 <div class="level-type">ML-Confluence: ${formattedData.levels.ml_confluence}</div>
                                 <div class="level-type">Multiscale: ${formattedData.levels.multiscale}</div>
                             </div>
+                            ${(() => {
+                                const allLevels = formattedData.allLevels || [];
+                                const cp = formattedData.currentPrice || 0;
+                                const resistance = allLevels.filter(l => (l.price || 0) > cp);
+                                const support = allLevels.filter(l => (l.price || 0) <= cp);
+                                const renderRow = (l, type) => {
+                                    const dist = cp ? (((l.price - cp) / cp) * 100).toFixed(2) : '0.00';
+                                    const color = type === 'resistance' ? '#6fcf97' : '#eb5757';
+                                    const str = l.strength ? (typeof l.strength === 'number' && l.strength <= 1 ? (l.strength * 100).toFixed(0) : Math.round(l.strength)) : '—';
+                                    return `<div class="level-row"><span class="level-row-price" style="color:${color}">$${l.price.toFixed(2)}</span><span class="level-row-type">${l.type || l.category || ''}</span><span class="level-row-str">${str}%</span><span class="level-row-dist" style="color:${parseFloat(dist) >= 0 ? '#6fcf97' : '#eb5757'}">${parseFloat(dist) >= 0 ? '+' : ''}${dist}%</span></div>`;
+                                };
+                                let html = '';
+                                if (resistance.length > 0) {
+                                    html += `<div class="level-list-section"><div class="level-list-header">Resistance (${resistance.length})</div>${resistance.slice(0, 15).map(l => renderRow(l, 'resistance')).join('')}</div>`;
+                                }
+                                if (support.length > 0) {
+                                    html += `<div class="level-list-section"><div class="level-list-header">Support (${support.length})</div>${support.slice(0, 15).map(l => renderRow(l, 'support')).join('')}</div>`;
+                                }
+                                return html;
+                            })()}
                         </div>
 
                         ${formattedData.attention && formattedData.attention.weights ? `
