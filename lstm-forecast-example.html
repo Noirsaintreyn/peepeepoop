@@ -939,8 +939,8 @@
                                 const renderRow = (l, type) => {
                                     const dist = cp ? (((l.price - cp) / cp) * 100).toFixed(2) : '0.00';
                                     const color = type === 'resistance' ? '#6fcf97' : '#eb5757';
-                                    const str = l.strength ? (typeof l.strength === 'number' && l.strength <= 1 ? (l.strength * 100).toFixed(0) : Math.round(l.strength)) : '—';
-                                    return `<div class="level-row"><span class="level-row-price" style="color:${color}">$${l.price.toFixed(2)}</span><span class="level-row-type">${l.type || l.category || ''}</span><span class="level-row-str">${str}%</span><span class="level-row-dist" style="color:${parseFloat(dist) >= 0 ? '#6fcf97' : '#eb5757'}">${parseFloat(dist) >= 0 ? '+' : ''}${dist}%</span></div>`;
+                                    const str = l.strength ? (typeof l.strength === 'number' && l.strength <= 1 ? (l.strength * 100).toFixed(0) + '%' : Math.round(l.strength) + '%') : '—';
+                                    return `<div class="level-row"><span class="level-row-price" style="color:${color}">$${l.price.toFixed(2)}</span><span class="level-row-type">${l.type || l.category || ''}</span><span class="level-row-str">${str}</span><span class="level-row-dist" style="color:${parseFloat(dist) >= 0 ? '#6fcf97' : '#eb5757'}">${parseFloat(dist) >= 0 ? '+' : ''}${dist}%</span></div>`;
                                 };
                                 let html = '';
                                 if (resistance.length > 0) {
