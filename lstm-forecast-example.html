@@ -295,6 +295,273 @@
             margin: 0 auto 48px;
         }
 
+        /* Backtest Styles */
+        .bt-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .bt-control {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            padding: 10px 12px;
+        }
+
+        .bt-control-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .bt-control-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .bt-control-value {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #e8e6e3;
+        }
+
+        .bt-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        .bt-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        .bt-level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .bt-level-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .bt-level-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .bt-level-card.selected {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .bt-level-price {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .bt-level-score {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .bt-level-meta {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin: 4px 0;
+        }
+
+        .bt-score-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .bt-score-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .bt-detail {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bt-detail-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .bt-detail-price {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .bt-badge {
+            font-size: 0.55rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .bt-detail-meta {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-left: auto;
+        }
+
+        .bt-detail-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .bt-detail-left {
+            padding: 18px;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .bt-detail-right {
+            padding: 18px;
+        }
+
+        .bt-section-label {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .bt-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .bt-stat-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .bt-stat-value {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .bt-stat-sub {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.25);
+            margin-left: 4px;
+        }
+
+        .bt-gauges {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .bt-gauge-label {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: center;
+            max-width: 70px;
+        }
+
+        .bt-regime-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .bt-regime-label {
+            width: 52px;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: right;
+        }
+
+        .bt-regime-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bt-regime-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .bt-regime-pct {
+            width: 36px;
+            font-size: 0.65rem;
+            color: #e8e6e3;
+            text-align: right;
+        }
+
+        .bt-regime-count {
+            width: 28px;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .bt-interp {
+            font-size: 0.7rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .bt-footer {
+            margin-top: 12px;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.2);
+            text-align: right;
+        }
+
+        @media (max-width: 768px) {
+            .bt-detail-body {
+                grid-template-columns: 1fr;
+            }
+            .bt-detail-left {
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            }
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .hero-content {
@@ -337,12 +604,13 @@
 <body>
     <!-- Navigation -->
     <nav class="nav">
-        <div class="nav-brand">LSTM Forecast</div>
+        <div class="nav-brand">L'argent parle.</div>
         <ul class="nav-links">
-            <li><a href="#" class="active">Forecast</a></li>
-            <li><a href="#">Analysis</a></li>
-            <li><a href="#">Levels</a></li>
-            <li><a href="#">Models</a></li>
+            <li><a href="#" class="active" data-tab="forecast">Forecast</a></li>
+            <li><a href="#" data-tab="backtest">Backtest</a></li>
+            <li><a href="#" data-tab="analysis">Analysis</a></li>
+            <li><a href="#" data-tab="levels">Levels</a></li>
+            <li><a href="#" data-tab="models">Models</a></li>
         </ul>
     </nav>
 
@@ -385,6 +653,43 @@
                 </div>
 
                 <div id="forecastContainer"></div>
+            </div>
+
+            <!-- Backtest Panel -->
+            <div class="forecast-panel backtest-panel" id="backtestPanel" style="display: none;">
+                <div class="panel-header">
+                    <div class="panel-title">Support Level Backtest</div>
+                    <div class="panel-badge">yfinance</div>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="bt-ticker">Ticker</label>
+                        <input type="text" id="bt-ticker" value="SPY" placeholder="SPY, NQ=F, etc.">
+                    </div>
+                    <div class="control-group">
+                        <label for="bt-period">Period</label>
+                        <select id="bt-period">
+                            <option value="6mo">6 Months</option>
+                            <option value="1y" selected>1 Year</option>
+                            <option value="2y">2 Years</option>
+                            <option value="5y">5 Years</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="bt-interval">Interval</label>
+                        <select id="bt-interval">
+                            <option value="1h">1 Hour</option>
+                            <option value="1d" selected>1 Day</option>
+                            <option value="1wk">1 Week</option>
+                        </select>
+                    </div>
+                    <div class="control-group full-width">
+                        <button class="btn" id="runBacktest">Run Backtest</button>
+                    </div>
+                </div>
+
+                <div id="backtestContainer"></div>
             </div>
         </div>
     </section>
@@ -1005,6 +1310,388 @@
                 `;
             } finally {
                 btn.disabled = false;
+            }
+        });
+        // ===== Tab Switching =====
+        const navLinks = document.querySelectorAll('.nav-links a[data-tab]');
+        const forecastPanel = document.querySelector('.forecast-panel:not(.backtest-panel)');
+        const backtestPanel = document.getElementById('backtestPanel');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                const tab = link.dataset.tab;
+                if (tab === 'backtest') {
+                    forecastPanel.style.display = 'none';
+                    backtestPanel.style.display = 'block';
+                } else {
+                    forecastPanel.style.display = 'block';
+                    backtestPanel.style.display = 'none';
+                }
+            });
+        });
+
+        // ===== Backtest Engine =====
+        const BT_COLORS = {
+            green: '#22c55e', red: '#ef4444', amber: '#f59e0b',
+            blue: '#3b82f6', purple: '#8b5cf6', teal: '#14b8a6'
+        };
+
+        function detectRegimes(data) {
+            const smaLen = 50;
+            for (let i = 0; i < data.length; i++) {
+                if (i < smaLen) { data[i].regime = 'sideways'; continue; }
+                const slice = data.slice(i - smaLen, i);
+                const sma = slice.reduce((s, d) => s + d.close, 0) / smaLen;
+                const prevSma = slice.slice(0, -1).reduce((s, d) => s + d.close, 0) / (smaLen - 1);
+                const diff = (sma - prevSma) / prevSma;
+                data[i].regime = diff > 0.001 ? 'bull' : diff < -0.001 ? 'bear' : 'sideways';
+            }
+            return data;
+        }
+
+        function detectSupportLevels(data, lookback = 20, strength = 3) {
+            const levels = [];
+            for (let i = lookback; i < data.length - lookback; i++) {
+                const low = data[i].low;
+                let count = 0;
+                for (let j = i - lookback; j <= i + lookback; j++) {
+                    if (j !== i && Math.abs(data[j].low - low) / low < 0.015) count++;
+                }
+                if (count >= strength) {
+                    const existing = levels.find(l => Math.abs(l.price - low) / low < 0.02);
+                    if (!existing) levels.push({ price: low, firstIdx: i, touches: count + 1 });
+                }
+            }
+            return levels.slice(0, 8);
+        }
+
+        function analyzeLevel(level, data, bounceThreshold = 0.01) {
+            const { price, firstIdx } = level;
+            const tolerance = price * 0.005;
+            const touches = [];
+            let validUntil = data.length - 1;
+            let broken = false;
+            let falseBreakouts = 0;
+
+            for (let i = firstIdx; i < data.length; i++) {
+                const bar = data[i];
+                if (Math.abs(bar.low - price) <= tolerance || (bar.low < price && bar.close > price - tolerance)) {
+                    const window = data.slice(Math.max(0, i - 20), i);
+                    const avgVol = window.length > 0 ? window.reduce((s, b) => s + b.volume, 0) / window.length : 1;
+                    const bounced = i + 5 < data.length && data[i + 5].close > price * (1 + bounceThreshold);
+                    touches.push({ idx: i, regime: bar.regime, bounced, volRatio: bar.volume / avgVol });
+                    if (bar.low < price - tolerance && bar.close > price - tolerance * 2) {
+                        falseBreakouts++;
+                    }
+                }
+                if (bar.close < price * 0.985 && i > firstIdx + 5 && !broken) {
+                    broken = true;
+                    validUntil = i;
+                }
+            }
+
+            const bounceRate = touches.length > 0 ? touches.filter(t => t.bounced).length / touches.length : 0;
+            const allPrices = data.map(d => d.close).sort((a, b) => a - b);
+            const pricePercentile = allPrices.filter(p => p < price).length / allPrices.length * 100;
+            const volumeConfirmed = touches.filter(t => t.volRatio > 1.2).length;
+            const volConfirmRate = touches.length > 0 ? volumeConfirmed / touches.length : 0;
+
+            const byRegime = { bull: { total: 0, bounce: 0 }, bear: { total: 0, bounce: 0 }, sideways: { total: 0, bounce: 0 } };
+            touches.forEach(t => { byRegime[t.regime].total++; if (t.bounced) byRegime[t.regime].bounce++; });
+
+            return {
+                price, touches: touches.length, bounceRate, pricePercentile, volConfirmRate,
+                byRegime, duration: validUntil - firstIdx, broken, falseBreakouts,
+                falseBreakoutRate: touches.length > 0 ? falseBreakouts / touches.length : 0,
+                touchData: touches
+            };
+        }
+
+        function scoreLevel(r) {
+            return (r.bounceRate * 40 + r.volConfirmRate * 25 + (1 - r.falseBreakoutRate) * 20 + (r.pricePercentile < 35 ? 15 : 5)).toFixed(1);
+        }
+
+        function qualityColor(v, lo, hi) {
+            return v >= hi ? BT_COLORS.green : v >= lo ? BT_COLORS.amber : BT_COLORS.red;
+        }
+
+        function drawMiniChart(canvas, data, levelPrice, width = 320, height = 90) {
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, width, height);
+
+            const prices = data.map(d => d.close);
+            const minP = Math.min(...prices) * 0.98;
+            const maxP = Math.max(...prices) * 1.02;
+            const scaleX = (i) => (i / (data.length - 1)) * (width - 8) + 4;
+            const scaleY = (p) => height - 4 - ((p - minP) / (maxP - minP)) * (height - 8);
+
+            const regColors = { bull: 'rgba(34,197,94,0.07)', bear: 'rgba(239,68,68,0.07)', sideways: 'rgba(148,163,184,0.07)' };
+            let regStart = 0;
+            for (let i = 1; i <= data.length; i++) {
+                if (i === data.length || data[i]?.regime !== data[regStart].regime) {
+                    ctx.fillStyle = regColors[data[regStart].regime] || regColors.sideways;
+                    ctx.fillRect(scaleX(regStart), 0, scaleX(Math.min(i - 1, data.length - 1)) - scaleX(regStart), height);
+                    regStart = i;
+                }
+            }
+
+            ctx.strokeStyle = 'rgba(148,163,184,0.8)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            data.forEach((d, i) => { i === 0 ? ctx.moveTo(scaleX(i), scaleY(d.close)) : ctx.lineTo(scaleX(i), scaleY(d.close)); });
+            ctx.stroke();
+
+            const ly = scaleY(levelPrice);
+            ctx.strokeStyle = BT_COLORS.amber;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(0, ly);
+            ctx.lineTo(width, ly);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function createGaugeSVG(value, label, color) {
+            const pct = Math.min(1, Math.max(0, value));
+            const r = 28, cx = 36, cy = 36;
+            const circ = 2 * Math.PI * r;
+            const dash = circ * 0.75;
+            const angle = -135 + 270 * pct;
+            const rad = (angle * Math.PI) / 180;
+            const dotX = cx + r * Math.cos(rad);
+            const dotY = cy + r * Math.sin(rad);
+            return `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                    <svg width="72" height="56" viewBox="0 0 72 72">
+                        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"
+                            stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-circ * 0.125}" stroke-linecap="round"/>
+                        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+                            stroke-dasharray="${dash * pct} ${circ - dash * pct}"
+                            stroke-dashoffset="${-circ * 0.125 + dash * (1 - pct)}" stroke-linecap="round"/>
+                        <circle cx="${dotX}" cy="${dotY}" r="3.5" fill="${color}"/>
+                        <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="500"
+                            fill="#e8e6e3" font-family="Inter, sans-serif">${(value * 100).toFixed(1)}%</text>
+                    </svg>
+                    <span class="bt-gauge-label">${label}</span>
+                </div>`;
+        }
+
+        let btData = null;
+        let btSelectedIdx = 0;
+        let btResults = [];
+        let btBounceThreshold = 0.01;
+        let btLookback = 20;
+        let btStrength = 3;
+
+        function renderBacktestResults() {
+            const container = document.getElementById('backtestContainer');
+            if (!btData || btData.length === 0) { container.innerHTML = ''; return; }
+
+            const levels = detectSupportLevels(btData, btLookback, btStrength);
+            btResults = levels.map(l => analyzeLevel(l, btData, btBounceThreshold));
+            btResults.sort((a, b) => parseFloat(scoreLevel(b)) - parseFloat(scoreLevel(a)));
+
+            if (btSelectedIdx >= btResults.length) btSelectedIdx = 0;
+            const sel = btResults[btSelectedIdx];
+
+            let html = `
+                <div class="bt-controls">
+                    <div class="bt-control">
+                        <div class="bt-control-header">
+                            <span class="bt-control-label">Bounce threshold</span>
+                            <span class="bt-control-value" id="bt-thresh-val">${(btBounceThreshold * 100).toFixed(1)}%</span>
+                        </div>
+                        <input type="range" class="bt-slider" id="bt-thresh" min="0.005" max="0.03" step="0.005" value="${btBounceThreshold}">
+                    </div>
+                    <div class="bt-control">
+                        <div class="bt-control-header">
+                            <span class="bt-control-label">Lookback window</span>
+                            <span class="bt-control-value" id="bt-lookback-val">${btLookback} bars</span>
+                        </div>
+                        <input type="range" class="bt-slider" id="bt-lookback" min="5" max="40" step="5" value="${btLookback}">
+                    </div>
+                    <div class="bt-control">
+                        <div class="bt-control-header">
+                            <span class="bt-control-label">Min cluster strength</span>
+                            <span class="bt-control-value" id="bt-strength-val">${btStrength} touches</span>
+                        </div>
+                        <input type="range" class="bt-slider" id="bt-strength" min="2" max="6" step="1" value="${btStrength}">
+                    </div>
+                </div>`;
+
+            html += '<div class="bt-level-grid">';
+            btResults.forEach((r, i) => {
+                const score = parseFloat(scoreLevel(r));
+                const sc = score >= 65 ? BT_COLORS.green : score >= 45 ? BT_COLORS.amber : BT_COLORS.red;
+                html += `
+                    <div class="bt-level-card ${btSelectedIdx === i ? 'selected' : ''}" data-bt-idx="${i}" style="${btSelectedIdx === i ? 'border-color:' + sc : ''}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                            <span class="bt-level-price">$${r.price.toFixed(2)}</span>
+                            <span class="bt-level-score" style="color:${sc}">${score}</span>
+                        </div>
+                        <div class="bt-level-meta">${r.touches} touches &middot; ${r.broken ? 'broken' : 'active'}</div>
+                        <div class="bt-score-bar"><div class="bt-score-fill" style="width:${score}%;background:${sc}"></div></div>
+                    </div>`;
+            });
+            html += '</div>';
+
+            if (sel) {
+                const brColor = sel.broken ? BT_COLORS.red : BT_COLORS.green;
+                html += `
+                <div class="bt-detail">
+                    <div class="bt-detail-header">
+                        <span class="bt-detail-price">$${sel.price.toFixed(2)}</span>
+                        <span class="bt-badge" style="border:1px solid ${brColor};color:${brColor}">${sel.broken ? 'BROKEN' : 'ACTIVE'}</span>
+                        <span class="bt-badge" style="border:1px solid ${BT_COLORS.blue};color:${BT_COLORS.blue}">SCORE ${scoreLevel(sel)}</span>
+                        <span class="bt-detail-meta">${sel.touches} total touches &middot; valid for ${sel.duration} bars &middot; ${sel.falseBreakouts} false breakout${sel.falseBreakouts !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="bt-detail-body">
+                        <div class="bt-detail-left">
+                            <canvas id="bt-mini-chart" style="width:100%;max-width:320px"></canvas>
+                            <div style="margin-top:16px">
+                                <div class="bt-section-label">CORE METRICS</div>
+                                <div class="bt-stat-row">
+                                    <span class="bt-stat-label">Bounce accuracy</span>
+                                    <span class="bt-stat-value" style="color:${qualityColor(sel.bounceRate, 0.4, 0.65)}">${(sel.bounceRate * 100).toFixed(1)}%<span class="bt-stat-sub">(&ge;${(btBounceThreshold * 100).toFixed(1)}% move)</span></span>
+                                </div>
+                                <div class="bt-stat-row">
+                                    <span class="bt-stat-label">Price percentile</span>
+                                    <span class="bt-stat-value" style="color:${sel.pricePercentile >= 5 && sel.pricePercentile <= 35 ? BT_COLORS.green : 'rgba(255,255,255,0.4)'}">${sel.pricePercentile.toFixed(1)}%<span class="bt-stat-sub">in price dist.</span></span>
+                                </div>
+                                <div class="bt-stat-row">
+                                    <span class="bt-stat-label">Vol confirmation</span>
+                                    <span class="bt-stat-value" style="color:${qualityColor(sel.volConfirmRate, 0.35, 0.55)}">${(sel.volConfirmRate * 100).toFixed(1)}%<span class="bt-stat-sub">above-avg vol at touch</span></span>
+                                </div>
+                                <div class="bt-stat-row">
+                                    <span class="bt-stat-label">False breakout rate</span>
+                                    <span class="bt-stat-value" style="color:${sel.falseBreakoutRate < 0.15 ? BT_COLORS.green : sel.falseBreakoutRate < 0.3 ? BT_COLORS.amber : BT_COLORS.red}">${(sel.falseBreakoutRate * 100).toFixed(1)}%</span>
+                                </div>
+                                <div class="bt-stat-row">
+                                    <span class="bt-stat-label">Level duration</span>
+                                    <span class="bt-stat-value" style="color:${sel.duration > 100 ? BT_COLORS.green : sel.duration > 50 ? BT_COLORS.amber : BT_COLORS.red}">${sel.duration} bars</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bt-detail-right">
+                            <div class="bt-section-label">SIGNAL GAUGES</div>
+                            <div class="bt-gauges">
+                                ${createGaugeSVG(sel.bounceRate, 'bounce rate', qualityColor(sel.bounceRate, 0.4, 0.65))}
+                                ${createGaugeSVG(sel.volConfirmRate, 'vol confirm', qualityColor(sel.volConfirmRate, 0.35, 0.55))}
+                                ${createGaugeSVG(1 - sel.falseBreakoutRate, 'reliability', qualityColor(1 - sel.falseBreakoutRate, 0.7, 0.85))}
+                            </div>
+                            <div class="bt-section-label" style="margin-top:16px">REGIME ROBUSTNESS</div>
+                            ${[{key:'bull',label:'bull',color:BT_COLORS.green},{key:'bear',label:'bear',color:BT_COLORS.red},{key:'sideways',label:'sideways',color:BT_COLORS.amber}].map(({key,label,color}) => {
+                                const r = sel.byRegime[key];
+                                const rate = r.total > 0 ? r.bounce / r.total : 0;
+                                return `<div class="bt-regime-row">
+                                    <span class="bt-regime-label">${label}</span>
+                                    <div class="bt-regime-bar"><div class="bt-regime-fill" style="width:${rate * 100}%;background:${color}"></div></div>
+                                    <span class="bt-regime-pct">${r.total > 0 ? (rate * 100).toFixed(0) + '%' : '—'}</span>
+                                    <span class="bt-regime-count">(${r.total})</span>
+                                </div>`;
+                            }).join('')}
+                            <div style="margin-top:16px">
+                                <div class="bt-section-label">INTERPRETATION</div>
+                                <div class="bt-interp">
+                                    ${sel.bounceRate >= 0.65 ? 'Strong bounce accuracy — high confidence level. ' : ''}
+                                    ${sel.bounceRate < 0.4 ? 'Weak bounce rate — exercise caution. ' : ''}
+                                    ${sel.pricePercentile >= 5 && sel.pricePercentile <= 35 ? 'Price sits in ideal support zone. ' : ''}
+                                    ${sel.volConfirmRate >= 0.5 ? 'Volume confirms institutional interest. ' : ''}
+                                    ${sel.falseBreakoutRate > 0.25 ? 'High false breakout frequency — widen stops. ' : ''}
+                                    ${sel.byRegime.bear.total > 0 && sel.byRegime.bear.bounce / sel.byRegime.bear.total > 0.5 ? 'Holds well in bear regime — robust level. ' : ''}
+                                    ${sel.duration > 100 ? 'Long-lived level — structurally significant.' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            html += `<div class="bt-footer">yfinance OHLCV &middot; ${btData.length} bars &middot; auto-detected regimes</div>`;
+            container.innerHTML = html;
+
+            // Draw mini chart
+            if (sel) {
+                const chartCanvas = document.getElementById('bt-mini-chart');
+                if (chartCanvas) drawMiniChart(chartCanvas, btData, sel.price);
+            }
+
+            // Bind slider events
+            const threshSlider = document.getElementById('bt-thresh');
+            const lookbackSlider = document.getElementById('bt-lookback');
+            const strengthSlider = document.getElementById('bt-strength');
+
+            if (threshSlider) threshSlider.addEventListener('input', (e) => {
+                btBounceThreshold = parseFloat(e.target.value);
+                document.getElementById('bt-thresh-val').textContent = (btBounceThreshold * 100).toFixed(1) + '%';
+                btSelectedIdx = 0;
+                renderBacktestResults();
+            });
+            if (lookbackSlider) lookbackSlider.addEventListener('input', (e) => {
+                btLookback = parseInt(e.target.value);
+                document.getElementById('bt-lookback-val').textContent = btLookback + ' bars';
+                btSelectedIdx = 0;
+                renderBacktestResults();
+            });
+            if (strengthSlider) strengthSlider.addEventListener('input', (e) => {
+                btStrength = parseInt(e.target.value);
+                document.getElementById('bt-strength-val').textContent = btStrength + ' touches';
+                btSelectedIdx = 0;
+                renderBacktestResults();
+            });
+
+            // Bind level card clicks
+            document.querySelectorAll('.bt-level-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    btSelectedIdx = parseInt(card.dataset.btIdx);
+                    renderBacktestResults();
+                });
+            });
+        }
+
+        // Backtest button handler
+        document.getElementById('runBacktest').addEventListener('click', async () => {
+            const ticker = document.getElementById('bt-ticker').value.trim();
+            const period = document.getElementById('bt-period').value;
+            const interval = document.getElementById('bt-interval').value;
+            const btBtn = document.getElementById('runBacktest');
+            const btContainer = document.getElementById('backtestContainer');
+
+            if (!ticker) { alert('Please enter a ticker symbol'); return; }
+
+            btBtn.disabled = true;
+            btContainer.innerHTML = '<div class="loading"><div class="spinner"></div><p>Fetching data...</p></div>';
+
+            try {
+                const url = new URL('https://fartpie.onrender.com/api/backtest-data');
+                url.searchParams.set('ticker', ticker);
+                url.searchParams.set('period', period);
+                url.searchParams.set('interval', interval);
+
+                const response = await fetch(url.toString());
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || `HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                btData = detectRegimes(result.data);
+                btSelectedIdx = 0;
+                renderBacktestResults();
+            } catch (error) {
+                btContainer.innerHTML = `<div class="lstm-forecast-error"><h3>Error</h3><p>${error.message}</p></div>`;
+            } finally {
+                btBtn.disabled = false;
             }
         });
     </script>
