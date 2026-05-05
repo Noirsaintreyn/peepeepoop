@@ -295,114 +295,6 @@
             margin: 0 auto 48px;
         }
 
-        /* Level Picker */
-        .bt-picker {
-            padding: 16px 20px;
-            margin-bottom: 16px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 4px;
-        }
-        .bt-picker-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .bt-picker-title {
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.5);
-        }
-        .bt-picker-actions {
-            display: flex;
-            gap: 8px;
-        }
-        .bt-picker-btn {
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 3px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: transparent;
-            color: rgba(255,255,255,0.5);
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            letter-spacing: 0.5px;
-        }
-        .bt-picker-btn:hover {
-            border-color: rgba(255,255,255,0.3);
-            color: rgba(255,255,255,0.8);
-        }
-        .bt-picker-category {
-            margin-bottom: 10px;
-        }
-        .bt-picker-cat-label {
-            font-size: 10px;
-            font-weight: 500;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.35);
-            margin-bottom: 6px;
-        }
-        .bt-picker-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .bt-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 5px 10px;
-            border-radius: 3px;
-            border: 1px solid rgba(255,255,255,0.12);
-            background: rgba(255,255,255,0.04);
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .bt-chip:hover {
-            border-color: rgba(255,255,255,0.25);
-            color: rgba(255,255,255,0.8);
-        }
-        .bt-chip.selected {
-            border-color: #3b82f6;
-            background: rgba(59,130,246,0.12);
-            color: #93bbfc;
-        }
-        .bt-chip.selected.support {
-            border-color: #ef4444;
-            background: rgba(239,68,68,0.1);
-            color: #f87171;
-        }
-        .bt-chip.selected.resistance {
-            border-color: #22c55e;
-            background: rgba(34,197,94,0.1);
-            color: #6fcf97;
-        }
-        .bt-chip-price {
-            font-weight: 500;
-        }
-        .bt-chip-type {
-            font-size: 9px;
-            opacity: 0.6;
-        }
-        .bt-picker-empty {
-            text-align: center;
-            padding: 24px;
-            color: rgba(255,255,255,0.35);
-            font-size: 13px;
-        }
-        .bt-picker-empty a {
-            color: #3b82f6;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
         /* Backtest Styles */
         .bt-controls {
             display: grid;
@@ -766,11 +658,9 @@
             <!-- Backtest Panel -->
             <div class="forecast-panel backtest-panel" id="backtestPanel" style="display: none;">
                 <div class="panel-header">
-                    <div class="panel-title">Level Accuracy Backtest</div>
+                    <div class="panel-title">Level Detection Backtest</div>
                     <div class="panel-badge">yfinance</div>
                 </div>
-
-                <div id="bt-level-picker"></div>
 
                 <div class="controls">
                     <div class="control-group">
@@ -799,8 +689,31 @@
                             <option value="5y">5 Years</option>
                         </select>
                     </div>
+                    <div class="control-group">
+                        <label for="bt-method">Detection Method</label>
+                        <select id="bt-method">
+                            <option value="hdbscan">HDBSCAN</option>
+                            <option value="optics">OPTICS</option>
+                            <option value="kde">KDE</option>
+                            <option value="multiscale">Multiscale HDBSCAN</option>
+                            <option value="neural_network">Neural Network</option>
+                            <option value="wyckoff">Wyckoff</option>
+                            <option value="ml_confluence">ML Confluence</option>
+                            <option value="interaction">Interaction</option>
+                            <option value="pivot">Pivots</option>
+                            <option value="gap">Gaps</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="bt-sl">Stop Loss (%)</label>
+                        <input type="number" id="bt-sl" value="1" min="0.1" max="20" step="0.1" placeholder="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label for="bt-tp">Take Profit (%)</label>
+                        <input type="number" id="bt-tp" value="2" min="0.1" max="20" step="0.1" placeholder="2.0">
+                    </div>
                     <div class="control-group full-width">
-                        <button class="btn" id="runBacktest">Test Selected Levels</button>
+                        <button class="btn" id="runBacktest">Run Backtest</button>
                     </div>
                 </div>
 
@@ -1392,89 +1305,6 @@
         const container = document.getElementById('forecastContainer');
         const btn = document.getElementById('getForecast');
 
-        // Global state for detected levels
-        let detectedLevels = [];
-        let detectedCurrentPrice = 0;
-        let selectedLevelPrices = new Set();
-        let detectedTicker = '';
-
-        function renderLevelPicker() {
-            const picker = document.getElementById('bt-level-picker');
-            if (!detectedLevels.length) {
-                picker.innerHTML = `<div class="bt-picker"><div class="bt-picker-empty">No levels detected yet. <a id="bt-go-forecast">Run a forecast first</a> to detect levels, then come back to test them.</div></div>`;
-                const goLink = document.getElementById('bt-go-forecast');
-                if (goLink) goLink.addEventListener('click', () => {
-                    document.querySelector('.nav-links a[data-tab="forecast"]').click();
-                });
-                return;
-            }
-
-            const categories = {};
-            detectedLevels.forEach(l => {
-                const cat = l.type || l.category || 'Other';
-                if (!categories[cat]) categories[cat] = [];
-                categories[cat].push(l);
-            });
-
-            let html = `<div class="bt-picker">
-                <div class="bt-picker-header">
-                    <span class="bt-picker-title">Select levels to test (${detectedTicker})</span>
-                    <div class="bt-picker-actions">
-                        <button class="bt-picker-btn" id="bt-select-all">Select All</button>
-                        <button class="bt-picker-btn" id="bt-select-none">Clear</button>
-                        <button class="bt-picker-btn" id="bt-select-support">Support Only</button>
-                        <button class="bt-picker-btn" id="bt-select-resistance">Resistance Only</button>
-                    </div>
-                </div>`;
-
-            for (const [cat, levels] of Object.entries(categories)) {
-                html += `<div class="bt-picker-category"><div class="bt-picker-cat-label">${cat} (${levels.length})</div><div class="bt-picker-chips">`;
-                levels.forEach(l => {
-                    const p = l.price;
-                    const side = p > detectedCurrentPrice ? 'resistance' : 'support';
-                    const sel = selectedLevelPrices.has(p) ? 'selected' : '';
-                    html += `<div class="bt-chip ${sel} ${sel ? side : ''}" data-price="${p}" data-side="${side}"><span class="bt-chip-price">$${p.toFixed(2)}</span></div>`;
-                });
-                html += `</div></div>`;
-            }
-
-            html += `<div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.35)">${selectedLevelPrices.size} of ${detectedLevels.length} levels selected</div></div>`;
-            picker.innerHTML = html;
-
-            // Bind chip clicks
-            picker.querySelectorAll('.bt-chip').forEach(chip => {
-                chip.addEventListener('click', () => {
-                    const price = parseFloat(chip.dataset.price);
-                    if (selectedLevelPrices.has(price)) {
-                        selectedLevelPrices.delete(price);
-                    } else {
-                        selectedLevelPrices.add(price);
-                    }
-                    renderLevelPicker();
-                });
-            });
-
-            // Bind action buttons
-            document.getElementById('bt-select-all').addEventListener('click', () => {
-                detectedLevels.forEach(l => selectedLevelPrices.add(l.price));
-                renderLevelPicker();
-            });
-            document.getElementById('bt-select-none').addEventListener('click', () => {
-                selectedLevelPrices.clear();
-                renderLevelPicker();
-            });
-            document.getElementById('bt-select-support').addEventListener('click', () => {
-                selectedLevelPrices.clear();
-                detectedLevels.filter(l => l.price <= detectedCurrentPrice).forEach(l => selectedLevelPrices.add(l.price));
-                renderLevelPicker();
-            });
-            document.getElementById('bt-select-resistance').addEventListener('click', () => {
-                selectedLevelPrices.clear();
-                detectedLevels.filter(l => l.price > detectedCurrentPrice).forEach(l => selectedLevelPrices.add(l.price));
-                renderLevelPicker();
-            });
-        }
-
         btn.addEventListener('click', async () => {
             const ticker = document.getElementById('ticker').value.trim();
             const timeframe = document.getElementById('timeframe').value;
@@ -1499,17 +1329,6 @@
                 const data = await forecast.getForecast(ticker, timeframe, lookback);
                 const formatted = forecast.formatForecast(data);
                 forecast.renderForecast(formatted, container);
-
-                // Store detected levels for backtest picker
-                detectedLevels = formatted.allLevels || [];
-                detectedCurrentPrice = formatted.currentPrice || 0;
-                detectedTicker = ticker;
-                selectedLevelPrices.clear();
-                // Auto-select all levels by default
-                detectedLevels.forEach(l => selectedLevelPrices.add(l.price));
-                // Sync ticker to backtest
-                document.getElementById('bt-ticker').value = ticker;
-                renderLevelPicker();
             } catch (error) {
                 container.innerHTML = `
                     <div class="lstm-forecast-error">
@@ -1521,9 +1340,6 @@
                 btn.disabled = false;
             }
         });
-
-        // Initial render of empty picker
-        renderLevelPicker();
         // ===== Tab Switching =====
         const navLinks = document.querySelectorAll('.nav-links a[data-tab]');
         const forecastPanel = document.querySelector('.forecast-panel:not(.backtest-panel)');
@@ -1551,321 +1367,239 @@
             blue: '#3b82f6', purple: '#8b5cf6', teal: '#14b8a6'
         };
 
-        function detectRegimes(data) {
-            const smaLen = 50;
-            for (let i = 0; i < data.length; i++) {
-                if (i < smaLen) { data[i].regime = 'sideways'; continue; }
-                const slice = data.slice(i - smaLen, i);
-                const sma = slice.reduce((s, d) => s + d.close, 0) / smaLen;
-                const prevSma = slice.slice(0, -1).reduce((s, d) => s + d.close, 0) / (smaLen - 1);
-                const diff = (sma - prevSma) / prevSma;
-                data[i].regime = diff > 0.001 ? 'bull' : diff < -0.001 ? 'bear' : 'sideways';
-            }
-            return data;
-        }
+        function simulateTrades(data, levels, splitIdx, slPct, tpPct) {
+            const trades = [];
+            const tolerance = 0.003; // 0.3% zone around level
 
-        function detectSupportLevels(data, lookback = 20, strength = 2) {
-            const levels = [];
-            for (let i = lookback; i < data.length; i++) {
-                const low = data[i].low;
-                let count = 0;
-                // BACKWARD ONLY — no look-ahead bias
-                for (let j = i - lookback; j < i; j++) {
-                    if (Math.abs(data[j].low - low) / low < 0.015) count++;
-                }
-                if (count >= strength) {
-                    const existing = levels.find(l => Math.abs(l.price - low) / low < 0.02);
-                    if (!existing) levels.push({ price: low, firstIdx: i, touches: count + 1 });
-                }
-            }
-            return levels.slice(0, 12);
-        }
+            for (const level of levels) {
+                const price = level.price;
+                const slDist = price * (slPct / 100);
+                const tpDist = price * (tpPct / 100);
+                let cooldown = 0;
 
-        function analyzeLevel(level, data, bounceThreshold = 0.01, evalStart = null) {
-            const { price, firstIdx } = level;
-            const tolerance = price * 0.005;
-            const touches = [];
-            let validUntil = data.length - 1;
-            let broken = false;
-            let falseBreakouts = 0;
-            // For auto-detected levels, start AFTER detection to avoid in-sample contamination
-            // For manual levels (evalStart=0), scan the full dataset
-            const startIdx = evalStart !== null ? evalStart : firstIdx + 1;
+                for (let i = splitIdx; i < data.length; i++) {
+                    if (cooldown > 0) { cooldown--; continue; }
+                    const bar = data[i];
 
-            for (let i = startIdx; i < data.length; i++) {
-                const bar = data[i];
-                if (Math.abs(bar.low - price) <= tolerance || (bar.low < price && bar.close > price - tolerance)) {
-                    const window = data.slice(Math.max(0, i - 20), i);
-                    const avgVol = window.length > 0 ? window.reduce((s, b) => s + b.volume, 0) / window.length : 1;
-                    const bounced = i + 5 < data.length && data[i + 5].close > price * (1 + bounceThreshold);
-                    touches.push({ idx: i, regime: bar.regime, bounced, volRatio: bar.volume / avgVol });
-                    if (bar.low < price - tolerance && bar.close > price - tolerance * 2) {
-                        falseBreakouts++;
+                    // Price touches the level (low reaches within tolerance)
+                    if (bar.low <= price * (1 + tolerance) && bar.low >= price * (1 - tolerance * 3)) {
+                        const entryPrice = price;
+                        const slPrice = entryPrice - slDist;
+                        const tpPrice = entryPrice + tpDist;
+                        let result = null;
+                        let exitIdx = i;
+                        let exitPrice = entryPrice;
+
+                        for (let j = i + 1; j < data.length; j++) {
+                            if (data[j].low <= slPrice) {
+                                result = 'loss';
+                                exitIdx = j;
+                                exitPrice = slPrice;
+                                break;
+                            }
+                            if (data[j].high >= tpPrice) {
+                                result = 'win';
+                                exitIdx = j;
+                                exitPrice = tpPrice;
+                                break;
+                            }
+                        }
+
+                        if (result) {
+                            trades.push({
+                                level: price,
+                                entryIdx: i,
+                                entryDate: bar.date,
+                                exitIdx,
+                                exitDate: data[exitIdx].date,
+                                entryPrice,
+                                exitPrice,
+                                result,
+                                pnlPct: ((exitPrice - entryPrice) / entryPrice * 100),
+                                barsHeld: exitIdx - i
+                            });
+                        }
+                        cooldown = 3; // skip next 3 bars to avoid repeat entries
                     }
                 }
-                if (bar.close < price * 0.985 && i > startIdx + 5 && !broken) {
-                    broken = true;
-                    validUntil = i;
-                }
             }
-
-            const bounceRate = touches.length > 0 ? touches.filter(t => t.bounced).length / touches.length : 0;
-            const allPrices = data.map(d => d.close).sort((a, b) => a - b);
-            const pricePercentile = allPrices.filter(p => p < price).length / allPrices.length * 100;
-            const volumeConfirmed = touches.filter(t => t.volRatio > 1.2).length;
-            const volConfirmRate = touches.length > 0 ? volumeConfirmed / touches.length : 0;
-
-            const byRegime = { bull: { total: 0, bounce: 0 }, bear: { total: 0, bounce: 0 }, sideways: { total: 0, bounce: 0 } };
-            touches.forEach(t => { byRegime[t.regime].total++; if (t.bounced) byRegime[t.regime].bounce++; });
-
-            return {
-                price, touches: touches.length, bounceRate, pricePercentile, volConfirmRate,
-                byRegime, duration: validUntil - startIdx, broken, falseBreakouts,
-                falseBreakoutRate: touches.length > 0 ? falseBreakouts / touches.length : 0,
-                touchData: touches, evalBars: data.length - startIdx
-            };
+            return trades;
         }
 
-        function scoreLevel(r) {
-            return (r.bounceRate * 40 + r.volConfirmRate * 25 + (1 - r.falseBreakoutRate) * 20 + (r.pricePercentile < 35 ? 15 : 5)).toFixed(1);
-        }
-
-        function qualityColor(v, lo, hi) {
-            return v >= hi ? BT_COLORS.green : v >= lo ? BT_COLORS.amber : BT_COLORS.red;
-        }
-
-        function drawMiniChart(canvas, data, levelPrice, width = 320, height = 90) {
-            const ctx = canvas.getContext('2d');
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            canvas.style.width = width + 'px';
-            canvas.style.height = height + 'px';
-            ctx.scale(dpr, dpr);
-            ctx.clearRect(0, 0, width, height);
-
-            const prices = data.map(d => d.close);
-            const minP = Math.min(...prices) * 0.98;
-            const maxP = Math.max(...prices) * 1.02;
-            const scaleX = (i) => (i / (data.length - 1)) * (width - 8) + 4;
-            const scaleY = (p) => height - 4 - ((p - minP) / (maxP - minP)) * (height - 8);
-
-            const regColors = { bull: 'rgba(34,197,94,0.07)', bear: 'rgba(239,68,68,0.07)', sideways: 'rgba(148,163,184,0.07)' };
-            let regStart = 0;
-            for (let i = 1; i <= data.length; i++) {
-                if (i === data.length || data[i]?.regime !== data[regStart].regime) {
-                    ctx.fillStyle = regColors[data[regStart].regime] || regColors.sideways;
-                    ctx.fillRect(scaleX(regStart), 0, scaleX(Math.min(i - 1, data.length - 1)) - scaleX(regStart), height);
-                    regStart = i;
-                }
-            }
-
-            ctx.strokeStyle = 'rgba(148,163,184,0.8)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            data.forEach((d, i) => { i === 0 ? ctx.moveTo(scaleX(i), scaleY(d.close)) : ctx.lineTo(scaleX(i), scaleY(d.close)); });
-            ctx.stroke();
-
-            const ly = scaleY(levelPrice);
-            ctx.strokeStyle = BT_COLORS.amber;
-            ctx.lineWidth = 1;
-            ctx.setLineDash([3, 3]);
-            ctx.beginPath();
-            ctx.moveTo(0, ly);
-            ctx.lineTo(width, ly);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        function createGaugeSVG(value, label, color) {
-            const pct = Math.min(1, Math.max(0, value));
-            const r = 28, cx = 36, cy = 36;
-            const circ = 2 * Math.PI * r;
-            const dash = circ * 0.75;
-            const angle = -135 + 270 * pct;
-            const rad = (angle * Math.PI) / 180;
-            const dotX = cx + r * Math.cos(rad);
-            const dotY = cy + r * Math.sin(rad);
-            return `
-                <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-                    <svg width="72" height="56" viewBox="0 0 72 72">
-                        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"
-                            stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-circ * 0.125}" stroke-linecap="round"/>
-                        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
-                            stroke-dasharray="${dash * pct} ${circ - dash * pct}"
-                            stroke-dashoffset="${-circ * 0.125 + dash * (1 - pct)}" stroke-linecap="round"/>
-                        <circle cx="${dotX}" cy="${dotY}" r="3.5" fill="${color}"/>
-                        <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="500"
-                            fill="#e8e6e3" font-family="Inter, sans-serif">${(value * 100).toFixed(1)}%</text>
-                    </svg>
-                    <span class="bt-gauge-label">${label}</span>
-                </div>`;
-        }
-
-        let btData = null;
-        let btSelectedIdx = 0;
-        let btResults = [];
-        let btBounceThreshold = 0.01;
-
-        function renderBacktestResults() {
+        function renderBacktestResults(data, levels, trades, splitIdx, method, slPct, tpPct) {
             const container = document.getElementById('backtestContainer');
-            if (!btData || btData.length === 0) { container.innerHTML = ''; return; }
-
-            if (selectedLevelPrices.size === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Select levels above to test their historical accuracy.</div>';
-                return;
-            }
-
-            const levels = Array.from(selectedLevelPrices).map(price => ({ price, firstIdx: 0, touches: 0 }));
-
-            // Evaluate each selected level across the full dataset
-            btResults = levels.map(l => analyzeLevel(l, btData, btBounceThreshold, 0));
-            btResults.sort((a, b) => parseFloat(scoreLevel(b)) - parseFloat(scoreLevel(a)));
-
-            if (btSelectedIdx >= btResults.length) btSelectedIdx = 0;
-            const sel = btResults[btSelectedIdx];
-
             const interval = document.getElementById('bt-interval').value;
             const tfLabels = {'5m':'5min','15m':'15min','1h':'1H','4h':'4H','1d':'Daily','1wk':'Weekly'};
             const tfLabel = tfLabels[interval] || interval;
+            const methodLabels = {
+                hdbscan:'HDBSCAN', optics:'OPTICS', kde:'KDE', multiscale:'Multiscale HDBSCAN',
+                neural_network:'Neural Network', wyckoff:'Wyckoff', ml_confluence:'ML Confluence',
+                interaction:'Interaction', pivot:'Pivots', gap:'Gaps'
+            };
+
+            const wins = trades.filter(t => t.result === 'win');
+            const losses = trades.filter(t => t.result === 'loss');
+            const winRate = trades.length > 0 ? wins.length / trades.length : 0;
+            const avgWin = wins.length > 0 ? wins.reduce((s, t) => s + t.pnlPct, 0) / wins.length : 0;
+            const avgLoss = losses.length > 0 ? losses.reduce((s, t) => s + t.pnlPct, 0) / losses.length : 0;
+            const totalPnl = trades.reduce((s, t) => s + t.pnlPct, 0);
+            const expectancy = trades.length > 0 ? totalPnl / trades.length : 0;
+            const avgBars = trades.length > 0 ? trades.reduce((s, t) => s + t.barsHeld, 0) / trades.length : 0;
+            const profitFactor = Math.abs(avgLoss) > 0 ? (wins.length * avgWin) / (losses.length * Math.abs(avgLoss)) : wins.length > 0 ? Infinity : 0;
+
+            // Per-level breakdown
+            const byLevel = {};
+            for (const lv of levels) {
+                byLevel[lv.price] = { price: lv.price, type: lv.type, trades: [], wins: 0, losses: 0 };
+            }
+            for (const t of trades) {
+                if (byLevel[t.level]) {
+                    byLevel[t.level].trades.push(t);
+                    if (t.result === 'win') byLevel[t.level].wins++;
+                    else byLevel[t.level].losses++;
+                }
+            }
 
             let html = `
                 <div class="bt-controls">
                     <div class="bt-control">
                         <div class="bt-control-header">
-                            <span class="bt-control-label">Bounce threshold</span>
-                            <span class="bt-control-value" id="bt-thresh-val">${(btBounceThreshold * 100).toFixed(1)}%</span>
-                        </div>
-                        <input type="range" class="bt-slider" id="bt-thresh" min="0.005" max="0.03" step="0.005" value="${btBounceThreshold}">
-                    </div>
-                    <div class="bt-control">
-                        <div class="bt-control-header">
-                            <span class="bt-control-label">Timeframe</span>
-                            <span class="bt-control-value">${tfLabel}</span>
+                            <span class="bt-control-label">Method</span>
+                            <span class="bt-control-value">${methodLabels[method] || method}</span>
                         </div>
                     </div>
                     <div class="bt-control">
                         <div class="bt-control-header">
-                            <span class="bt-control-label">Levels tested</span>
+                            <span class="bt-control-label">Levels found</span>
                             <span class="bt-control-value">${levels.length}</span>
                         </div>
                     </div>
+                    <div class="bt-control">
+                        <div class="bt-control-header">
+                            <span class="bt-control-label">SL / TP</span>
+                            <span class="bt-control-value">${slPct}% / ${tpPct}%</span>
+                        </div>
+                    </div>
+                    <div class="bt-control">
+                        <div class="bt-control-header">
+                            <span class="bt-control-label">Train / Test</span>
+                            <span class="bt-control-value">${splitIdx} / ${data.length - splitIdx} bars</span>
+                        </div>
+                    </div>
                 </div>`;
 
-            html += '<div class="bt-level-grid">';
-            btResults.forEach((r, i) => {
-                const score = parseFloat(scoreLevel(r));
-                const sc = score >= 65 ? BT_COLORS.green : score >= 45 ? BT_COLORS.amber : BT_COLORS.red;
-                html += `
-                    <div class="bt-level-card ${btSelectedIdx === i ? 'selected' : ''}" data-bt-idx="${i}" style="${btSelectedIdx === i ? 'border-color:' + sc : ''}">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                            <span class="bt-level-price">$${r.price.toFixed(2)}</span>
-                            <span class="bt-level-score" style="color:${sc}">${score}</span>
-                        </div>
-                        <div class="bt-level-meta">${r.touches} touches &middot; ${r.broken ? 'broken' : 'active'}</div>
-                        <div class="bt-score-bar"><div class="bt-score-fill" style="width:${score}%;background:${sc}"></div></div>
-                    </div>`;
-            });
-            html += '</div>';
+            // Aggregate stats
+            const wrColor = winRate >= 0.55 ? BT_COLORS.green : winRate >= 0.4 ? BT_COLORS.amber : BT_COLORS.red;
+            const pfColor = profitFactor >= 1.5 ? BT_COLORS.green : profitFactor >= 1 ? BT_COLORS.amber : BT_COLORS.red;
+            const expColor = expectancy > 0 ? BT_COLORS.green : BT_COLORS.red;
 
-            if (sel) {
-                const brColor = sel.broken ? BT_COLORS.red : BT_COLORS.green;
-                html += `
+            html += `
                 <div class="bt-detail">
                     <div class="bt-detail-header">
-                        <span class="bt-detail-price">$${sel.price.toFixed(2)}</span>
-                        <span class="bt-badge" style="border:1px solid ${brColor};color:${brColor}">${sel.broken ? 'BROKEN' : 'ACTIVE'}</span>
-                        <span class="bt-badge" style="border:1px solid ${BT_COLORS.blue};color:${BT_COLORS.blue}">SCORE ${scoreLevel(sel)}</span>
-                        <span class="bt-detail-meta">${sel.touches} total touches &middot; eval'd ${sel.evalBars} bars &middot; valid ${sel.duration} bars &middot; ${sel.falseBreakouts} false breakout${sel.falseBreakouts !== 1 ? 's' : ''}</span>
+                        <span class="bt-detail-price">${methodLabels[method] || method}</span>
+                        <span class="bt-badge" style="border:1px solid ${wrColor};color:${wrColor}">${(winRate * 100).toFixed(1)}% WIN RATE</span>
+                        <span class="bt-badge" style="border:1px solid ${BT_COLORS.blue};color:${BT_COLORS.blue}">${trades.length} TRADES</span>
+                        <span class="bt-detail-meta">out-of-sample on ${data.length - splitIdx} bars &middot; ${tfLabel}</span>
                     </div>
                     <div class="bt-detail-body">
                         <div class="bt-detail-left">
-                            <canvas id="bt-mini-chart" style="width:100%;max-width:320px"></canvas>
-                            <div style="margin-top:16px">
-                                <div class="bt-section-label">CORE METRICS</div>
-                                <div class="bt-stat-row">
-                                    <span class="bt-stat-label">Bounce accuracy</span>
-                                    <span class="bt-stat-value" style="color:${qualityColor(sel.bounceRate, 0.4, 0.65)}">${(sel.bounceRate * 100).toFixed(1)}%<span class="bt-stat-sub">(&ge;${(btBounceThreshold * 100).toFixed(1)}% move)</span></span>
-                                </div>
-                                <div class="bt-stat-row">
-                                    <span class="bt-stat-label">Price percentile</span>
-                                    <span class="bt-stat-value" style="color:${sel.pricePercentile >= 5 && sel.pricePercentile <= 35 ? BT_COLORS.green : 'rgba(255,255,255,0.4)'}">${sel.pricePercentile.toFixed(1)}%<span class="bt-stat-sub">in price dist.</span></span>
-                                </div>
-                                <div class="bt-stat-row">
-                                    <span class="bt-stat-label">Vol confirmation</span>
-                                    <span class="bt-stat-value" style="color:${qualityColor(sel.volConfirmRate, 0.35, 0.55)}">${(sel.volConfirmRate * 100).toFixed(1)}%<span class="bt-stat-sub">above-avg vol at touch</span></span>
-                                </div>
-                                <div class="bt-stat-row">
-                                    <span class="bt-stat-label">False breakout rate</span>
-                                    <span class="bt-stat-value" style="color:${sel.falseBreakoutRate < 0.15 ? BT_COLORS.green : sel.falseBreakoutRate < 0.3 ? BT_COLORS.amber : BT_COLORS.red}">${(sel.falseBreakoutRate * 100).toFixed(1)}%</span>
-                                </div>
-                                <div class="bt-stat-row">
-                                    <span class="bt-stat-label">Level duration</span>
-                                    <span class="bt-stat-value" style="color:${sel.duration > 100 ? BT_COLORS.green : sel.duration > 50 ? BT_COLORS.amber : BT_COLORS.red}">${sel.duration} bars</span>
-                                </div>
+                            <div class="bt-section-label">TRADE RESULTS</div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Total trades</span>
+                                <span class="bt-stat-value">${trades.length}</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Wins</span>
+                                <span class="bt-stat-value" style="color:${BT_COLORS.green}">${wins.length}</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Losses</span>
+                                <span class="bt-stat-value" style="color:${BT_COLORS.red}">${losses.length}</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Win rate</span>
+                                <span class="bt-stat-value" style="color:${wrColor}">${(winRate * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Avg win</span>
+                                <span class="bt-stat-value" style="color:${BT_COLORS.green}">+${avgWin.toFixed(2)}%</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Avg loss</span>
+                                <span class="bt-stat-value" style="color:${BT_COLORS.red}">${avgLoss.toFixed(2)}%</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Expectancy</span>
+                                <span class="bt-stat-value" style="color:${expColor}">${expectancy >= 0 ? '+' : ''}${expectancy.toFixed(2)}%<span class="bt-stat-sub">per trade</span></span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Profit factor</span>
+                                <span class="bt-stat-value" style="color:${pfColor}">${profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)}</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Total P&L</span>
+                                <span class="bt-stat-value" style="color:${totalPnl >= 0 ? BT_COLORS.green : BT_COLORS.red}">${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}%</span>
+                            </div>
+                            <div class="bt-stat-row">
+                                <span class="bt-stat-label">Avg bars held</span>
+                                <span class="bt-stat-value">${avgBars.toFixed(1)}</span>
                             </div>
                         </div>
                         <div class="bt-detail-right">
-                            <div class="bt-section-label">SIGNAL GAUGES</div>
-                            <div class="bt-gauges">
-                                ${createGaugeSVG(sel.bounceRate, 'bounce rate', qualityColor(sel.bounceRate, 0.4, 0.65))}
-                                ${createGaugeSVG(sel.volConfirmRate, 'vol confirm', qualityColor(sel.volConfirmRate, 0.35, 0.55))}
-                                ${createGaugeSVG(1 - sel.falseBreakoutRate, 'reliability', qualityColor(1 - sel.falseBreakoutRate, 0.7, 0.85))}
-                            </div>
-                            <div class="bt-section-label" style="margin-top:16px">REGIME ROBUSTNESS</div>
-                            ${[{key:'bull',label:'bull',color:BT_COLORS.green},{key:'bear',label:'bear',color:BT_COLORS.red},{key:'sideways',label:'sideways',color:BT_COLORS.amber}].map(({key,label,color}) => {
-                                const r = sel.byRegime[key];
-                                const rate = r.total > 0 ? r.bounce / r.total : 0;
-                                return `<div class="bt-regime-row">
-                                    <span class="bt-regime-label">${label}</span>
-                                    <div class="bt-regime-bar"><div class="bt-regime-fill" style="width:${rate * 100}%;background:${color}"></div></div>
-                                    <span class="bt-regime-pct">${r.total > 0 ? (rate * 100).toFixed(0) + '%' : '—'}</span>
-                                    <span class="bt-regime-count">(${r.total})</span>
-                                </div>`;
+                            <div class="bt-section-label">PER-LEVEL BREAKDOWN</div>
+                            ${Object.values(byLevel).map(lv => {
+                                const lvTotal = lv.trades.length;
+                                const lvWr = lvTotal > 0 ? lv.wins / lvTotal : 0;
+                                const lvColor = lvWr >= 0.55 ? BT_COLORS.green : lvWr >= 0.4 ? BT_COLORS.amber : BT_COLORS.red;
+                                return `
+                                    <div style="margin-bottom:8px;padding:8px;background:rgba(255,255,255,0.02);border-radius:3px">
+                                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                                            <span style="font-weight:500;font-size:13px">$${lv.price.toFixed(2)}</span>
+                                            <span style="font-size:11px;color:rgba(255,255,255,0.4)">${lv.type || ''}</span>
+                                        </div>
+                                        <div style="display:flex;gap:12px;font-size:11px">
+                                            <span>${lvTotal} trade${lvTotal !== 1 ? 's' : ''}</span>
+                                            <span style="color:${BT_COLORS.green}">${lv.wins}W</span>
+                                            <span style="color:${BT_COLORS.red}">${lv.losses}L</span>
+                                            <span style="color:${lvColor}">${(lvWr * 100).toFixed(0)}%</span>
+                                        </div>
+                                        <div class="bt-score-bar" style="margin-top:4px"><div class="bt-score-fill" style="width:${lvWr * 100}%;background:${lvColor}"></div></div>
+                                    </div>`;
                             }).join('')}
                             <div style="margin-top:16px">
-                                <div class="bt-section-label">INTERPRETATION</div>
+                                <div class="bt-section-label">DATA INTEGRITY</div>
                                 <div class="bt-interp">
-                                    ${sel.bounceRate >= 0.65 ? 'Strong bounce accuracy — high confidence level. ' : ''}
-                                    ${sel.bounceRate < 0.4 ? 'Weak bounce rate — exercise caution. ' : ''}
-                                    ${sel.pricePercentile >= 5 && sel.pricePercentile <= 35 ? 'Price sits in ideal support zone. ' : ''}
-                                    ${sel.volConfirmRate >= 0.5 ? 'Volume confirms institutional interest. ' : ''}
-                                    ${sel.falseBreakoutRate > 0.25 ? 'High false breakout frequency — widen stops. ' : ''}
-                                    ${sel.byRegime.bear.total > 0 && sel.byRegime.bear.bounce / sel.byRegime.bear.total > 0.5 ? 'Holds well in bear regime — robust level. ' : ''}
-                                    ${sel.duration > 100 ? 'Long-lived level — structurally significant.' : ''}
+                                    Levels detected on first ${splitIdx} bars (training). Trades simulated on last ${data.length - splitIdx} bars (test). No data leakage — levels never see test data.
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>`;
-            }
 
-            html += `<div class="bt-footer">yfinance OHLCV &middot; ${btData.length} bars &middot; ${tfLabel} &middot; ${levels.length} level${levels.length !== 1 ? 's' : ''} tested &middot; auto-detected regimes</div>`;
-            container.innerHTML = html;
-
-            // Draw mini chart
-            if (sel) {
-                const chartCanvas = document.getElementById('bt-mini-chart');
-                if (chartCanvas) drawMiniChart(chartCanvas, btData, sel.price);
-            }
-
-            // Bind slider events
-            const threshSlider = document.getElementById('bt-thresh');
-
-            if (threshSlider) threshSlider.addEventListener('input', (e) => {
-                btBounceThreshold = parseFloat(e.target.value);
-                document.getElementById('bt-thresh-val').textContent = (btBounceThreshold * 100).toFixed(1) + '%';
-                btSelectedIdx = 0;
-                renderBacktestResults();
-            });
-
-            // Bind level card clicks
-            document.querySelectorAll('.bt-level-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    btSelectedIdx = parseInt(card.dataset.btIdx);
-                    renderBacktestResults();
+            // Trade log
+            if (trades.length > 0) {
+                html += `<div style="margin-top:16px"><div class="bt-section-label" style="padding:0 4px;margin-bottom:8px">TRADE LOG (last 20)</div>`;
+                html += `<div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse">
+                    <tr style="color:rgba(255,255,255,0.4);text-align:left">
+                        <th style="padding:4px 8px">Level</th><th style="padding:4px 8px">Entry</th><th style="padding:4px 8px">Exit</th>
+                        <th style="padding:4px 8px">Result</th><th style="padding:4px 8px">P&L</th><th style="padding:4px 8px">Bars</th>
+                    </tr>`;
+                trades.slice(-20).forEach(t => {
+                    const rc = t.result === 'win' ? BT_COLORS.green : BT_COLORS.red;
+                    html += `<tr style="border-top:1px solid rgba(255,255,255,0.04)">
+                        <td style="padding:4px 8px">$${t.level.toFixed(2)}</td>
+                        <td style="padding:4px 8px">${t.entryDate}</td>
+                        <td style="padding:4px 8px">${t.exitDate}</td>
+                        <td style="padding:4px 8px;color:${rc}">${t.result.toUpperCase()}</td>
+                        <td style="padding:4px 8px;color:${rc}">${t.pnlPct >= 0 ? '+' : ''}${t.pnlPct.toFixed(2)}%</td>
+                        <td style="padding:4px 8px">${t.barsHeld}</td>
+                    </tr>`;
                 });
-            });
+                html += `</table></div></div>`;
+            }
+
+            html += `<div class="bt-footer">yfinance OHLCV &middot; ${data.length} bars &middot; ${tfLabel} &middot; ${methodLabels[method] || method} &middot; ${splitIdx}/${data.length - splitIdx} train/test split &middot; no data leakage</div>`;
+            container.innerHTML = html;
         }
 
         // Backtest button handler
@@ -1873,20 +1607,23 @@
             const ticker = document.getElementById('bt-ticker').value.trim();
             const period = document.getElementById('bt-period').value;
             const interval = document.getElementById('bt-interval').value;
+            const method = document.getElementById('bt-method').value;
+            const slPct = parseFloat(document.getElementById('bt-sl').value) || 1;
+            const tpPct = parseFloat(document.getElementById('bt-tp').value) || 2;
             const btBtn = document.getElementById('runBacktest');
             const btContainer = document.getElementById('backtestContainer');
 
-            if (selectedLevelPrices.size === 0) { alert('Select at least one level to test'); return; }
             if (!ticker) { alert('Please enter a ticker symbol'); return; }
 
             btBtn.disabled = true;
-            btContainer.innerHTML = `<div class="loading"><div class="spinner"></div><p>Testing ${selectedLevelPrices.size} level${selectedLevelPrices.size !== 1 ? 's' : ''} on ${interval} data...</p></div>`;
+            btContainer.innerHTML = `<div class="loading"><div class="spinner"></div><p>Running ${method} on ${ticker} ${interval} data...</p></div>`;
 
             try {
-                const url = new URL('https://fartpie.onrender.com/api/backtest-data');
+                const url = new URL('https://fartpie.onrender.com/api/backtest-levels');
                 url.searchParams.set('ticker', ticker);
                 url.searchParams.set('period', period);
                 url.searchParams.set('interval', interval);
+                url.searchParams.set('method', method);
 
                 const response = await fetch(url.toString());
                 if (!response.ok) {
@@ -1895,9 +1632,17 @@
                 }
 
                 const result = await response.json();
-                btData = detectRegimes(result.data);
-                btSelectedIdx = 0;
-                renderBacktestResults();
+                const data = result.data;
+                const levels = result.levels;
+                const splitIdx = result.split_idx;
+
+                if (!levels || levels.length === 0) {
+                    btContainer.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">No levels detected by ${method} on the training data. Try a different method or longer period.</div>`;
+                    return;
+                }
+
+                const trades = simulateTrades(data, levels, splitIdx, slPct, tpPct);
+                renderBacktestResults(data, levels, trades, splitIdx, method, slPct, tpPct);
             } catch (error) {
                 btContainer.innerHTML = `<div class="lstm-forecast-error"><h3>Error</h3><p>${error.message}</p></div>`;
             } finally {
