@@ -658,38 +658,43 @@
             <!-- Backtest Panel -->
             <div class="forecast-panel backtest-panel" id="backtestPanel" style="display: none;">
                 <div class="panel-header">
-                    <div class="panel-title">Support Level Backtest</div>
+                    <div class="panel-title">Level Accuracy Backtest</div>
                     <div class="panel-badge">yfinance</div>
                 </div>
 
                 <div class="controls">
                     <div class="control-group">
+                        <label for="bt-level">Level ($) *</label>
+                        <input type="text" id="bt-level" value="" placeholder="e.g. 580, 620, 650" required>
+                    </div>
+                    <div class="control-group">
                         <label for="bt-ticker">Ticker</label>
                         <input type="text" id="bt-ticker" value="SPY" placeholder="SPY, NQ=F, etc.">
                     </div>
                     <div class="control-group">
+                        <label for="bt-interval">Timeframe</label>
+                        <select id="bt-interval">
+                            <option value="5m">5 Min</option>
+                            <option value="15m">15 Min</option>
+                            <option value="1h">1 Hour</option>
+                            <option value="4h">4 Hours</option>
+                            <option value="1d" selected>Daily</option>
+                            <option value="1wk">Weekly</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
                         <label for="bt-period">Period</label>
                         <select id="bt-period">
+                            <option value="1mo">1 Month</option>
+                            <option value="3mo">3 Months</option>
                             <option value="6mo">6 Months</option>
                             <option value="1y" selected>1 Year</option>
                             <option value="2y">2 Years</option>
                             <option value="5y">5 Years</option>
                         </select>
                     </div>
-                    <div class="control-group">
-                        <label for="bt-interval">Interval</label>
-                        <select id="bt-interval">
-                            <option value="1h">1 Hour</option>
-                            <option value="1d" selected>1 Day</option>
-                            <option value="1wk">1 Week</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label for="bt-level">Level ($)</label>
-                        <input type="text" id="bt-level" value="" placeholder="e.g. 580, 620, 650">
-                    </div>
                     <div class="control-group full-width">
-                        <button class="btn" id="runBacktest">Run Backtest</button>
+                        <button class="btn" id="runBacktest">Test Levels</button>
                     </div>
                 </div>
 
@@ -1505,25 +1510,32 @@
             const container = document.getElementById('backtestContainer');
             if (!btData || btData.length === 0) { container.innerHTML = ''; return; }
 
-            const customLevelStr = document.getElementById('bt-level').value.trim();
-            let levels;
-            let isManual = false;
-            if (customLevelStr) {
-                isManual = true;
-                levels = customLevelStr.split(',')
-                    .map(s => parseFloat(s.trim()))
-                    .filter(p => !isNaN(p) && p > 0)
-                    .map(price => ({ price, firstIdx: 0, touches: 0 }));
-            } else {
-                levels = detectSupportLevels(btData, btLookback, btStrength);
+            const levelStr = document.getElementById('bt-level').value.trim();
+            if (!levelStr) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Enter one or more price levels to test their historical accuracy.</div>';
+                return;
             }
 
-            // For manual levels: evalStart=0 (full dataset). For auto: evalStart=null (firstIdx+1).
-            btResults = levels.map(l => analyzeLevel(l, btData, btBounceThreshold, isManual ? 0 : null));
+            const levels = levelStr.split(',')
+                .map(s => parseFloat(s.trim()))
+                .filter(p => !isNaN(p) && p > 0)
+                .map(price => ({ price, firstIdx: 0, touches: 0 }));
+
+            if (levels.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">No valid price levels found. Enter prices like: 580, 620, 650</div>';
+                return;
+            }
+
+            // Evaluate each level across the full dataset
+            btResults = levels.map(l => analyzeLevel(l, btData, btBounceThreshold, 0));
             btResults.sort((a, b) => parseFloat(scoreLevel(b)) - parseFloat(scoreLevel(a)));
 
             if (btSelectedIdx >= btResults.length) btSelectedIdx = 0;
             const sel = btResults[btSelectedIdx];
+
+            const interval = document.getElementById('bt-interval').value;
+            const tfLabels = {'5m':'5min','15m':'15min','1h':'1H','4h':'4H','1d':'Daily','1wk':'Weekly'};
+            const tfLabel = tfLabels[interval] || interval;
 
             let html = `
                 <div class="bt-controls">
@@ -1536,17 +1548,15 @@
                     </div>
                     <div class="bt-control">
                         <div class="bt-control-header">
-                            <span class="bt-control-label">Lookback window</span>
-                            <span class="bt-control-value" id="bt-lookback-val">${btLookback} bars</span>
+                            <span class="bt-control-label">Timeframe</span>
+                            <span class="bt-control-value">${tfLabel}</span>
                         </div>
-                        <input type="range" class="bt-slider" id="bt-lookback" min="5" max="40" step="5" value="${btLookback}">
                     </div>
                     <div class="bt-control">
                         <div class="bt-control-header">
-                            <span class="bt-control-label">Min cluster strength</span>
-                            <span class="bt-control-value" id="bt-strength-val">${btStrength} touches</span>
+                            <span class="bt-control-label">Levels tested</span>
+                            <span class="bt-control-value">${levels.length}</span>
                         </div>
-                        <input type="range" class="bt-slider" id="bt-strength" min="1" max="6" step="1" value="${btStrength}">
                     </div>
                 </div>`;
 
@@ -1638,8 +1648,7 @@
                 </div>`;
             }
 
-            const modeLabel = isManual ? 'manual levels' : 'auto-detected levels (out-of-sample eval)';
-            html += `<div class="bt-footer">yfinance OHLCV &middot; ${btData.length} bars &middot; ${modeLabel} &middot; auto-detected regimes</div>`;
+            html += `<div class="bt-footer">yfinance OHLCV &middot; ${btData.length} bars &middot; ${tfLabel} &middot; ${levels.length} level${levels.length !== 1 ? 's' : ''} tested &middot; auto-detected regimes</div>`;
             container.innerHTML = html;
 
             // Draw mini chart
@@ -1650,24 +1659,10 @@
 
             // Bind slider events
             const threshSlider = document.getElementById('bt-thresh');
-            const lookbackSlider = document.getElementById('bt-lookback');
-            const strengthSlider = document.getElementById('bt-strength');
 
             if (threshSlider) threshSlider.addEventListener('input', (e) => {
                 btBounceThreshold = parseFloat(e.target.value);
                 document.getElementById('bt-thresh-val').textContent = (btBounceThreshold * 100).toFixed(1) + '%';
-                btSelectedIdx = 0;
-                renderBacktestResults();
-            });
-            if (lookbackSlider) lookbackSlider.addEventListener('input', (e) => {
-                btLookback = parseInt(e.target.value);
-                document.getElementById('bt-lookback-val').textContent = btLookback + ' bars';
-                btSelectedIdx = 0;
-                renderBacktestResults();
-            });
-            if (strengthSlider) strengthSlider.addEventListener('input', (e) => {
-                btStrength = parseInt(e.target.value);
-                document.getElementById('bt-strength-val').textContent = btStrength + ' touches';
                 btSelectedIdx = 0;
                 renderBacktestResults();
             });
@@ -1683,16 +1678,19 @@
 
         // Backtest button handler
         document.getElementById('runBacktest').addEventListener('click', async () => {
+            const levelStr = document.getElementById('bt-level').value.trim();
             const ticker = document.getElementById('bt-ticker').value.trim();
             const period = document.getElementById('bt-period').value;
             const interval = document.getElementById('bt-interval').value;
             const btBtn = document.getElementById('runBacktest');
             const btContainer = document.getElementById('backtestContainer');
 
+            if (!levelStr) { alert('Enter at least one price level to test'); return; }
             if (!ticker) { alert('Please enter a ticker symbol'); return; }
 
             btBtn.disabled = true;
-            btContainer.innerHTML = '<div class="loading"><div class="spinner"></div><p>Fetching data...</p></div>';
+            const parsedLevels = levelStr.split(',').map(s => parseFloat(s.trim())).filter(p => !isNaN(p) && p > 0);
+            btContainer.innerHTML = `<div class="loading"><div class="spinner"></div><p>Testing ${parsedLevels.length} level${parsedLevels.length !== 1 ? 's' : ''} on ${interval} data...</p></div>`;
 
             try {
                 const url = new URL('https://fartpie.onrender.com/api/backtest-data');
