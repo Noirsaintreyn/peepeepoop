@@ -15,7 +15,7 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            background: #0a0a0a;
+            background: #0a0e1a;
             color: #e8e6e3;
             overflow-x: hidden;
         }
@@ -31,10 +31,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 24px 48px;
-            background: rgba(10, 10, 10, 0.85);
+            background: rgba(10, 14, 26, 0.9);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(201, 162, 39, 0.12);
         }
 
         .nav-brand {
@@ -43,7 +43,7 @@
             font-weight: 400;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            color: #ffffff;
+            color: #c9a227;
         }
 
         .nav-links {
@@ -57,14 +57,14 @@
             font-weight: 400;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(201, 162, 39, 0.5);
             text-decoration: none;
             transition: color 0.3s ease;
         }
 
         .nav-links a:hover,
         .nav-links a.active {
-            color: #ffffff;
+            color: #c9a227;
         }
 
         /* Hero Section */
@@ -79,7 +79,7 @@
         .hero-bg {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse at 70% 50%, rgba(30, 30, 45, 0.5) 0%, transparent 70%);
+            background: radial-gradient(ellipse at 70% 50%, rgba(10, 14, 26, 0.5) 0%, transparent 70%);
             pointer-events: none;
         }
 
@@ -136,8 +136,8 @@
 
         /* Forecast Panel */
         .forecast-panel {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(201, 162, 39, 0.03);
+            border: 1px solid rgba(201, 162, 39, 0.15);
             border-radius: 2px;
             padding: 48px;
             animation: fadeIn 1s ease-out 0.3s both;
@@ -154,7 +154,7 @@
             align-items: center;
             margin-bottom: 40px;
             padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(201, 162, 39, 0.12);
         }
 
         .panel-title {
@@ -170,8 +170,8 @@
             font-weight: 500;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(201, 162, 39, 0.5);
+            border: 1px solid rgba(201, 162, 39, 0.2);
             padding: 6px 14px;
             border-radius: 1px;
         }
@@ -198,7 +198,7 @@
             font-weight: 500;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.35);
+            color: rgba(201, 162, 39, 0.5);
             margin-bottom: 10px;
         }
 
@@ -206,8 +206,8 @@
         .control-group select {
             width: 100%;
             padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(201, 162, 39, 0.04);
+            border: 1px solid rgba(201, 162, 39, 0.15);
             border-radius: 1px;
             color: #ffffff;
             font-family: 'Inter', sans-serif;
@@ -222,22 +222,22 @@
         }
 
         .control-group select option {
-            background: #0a0a0a;
+            background: #0a0e1a;
             color: #ffffff;
         }
 
         .control-group input:focus,
         .control-group select:focus {
             outline: none;
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(201, 162, 39, 0.4);
         }
 
         .btn {
             width: 100%;
             padding: 16px 32px;
             background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #ffffff;
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            color: #c9a227;
             font-family: 'Inter', sans-serif;
             font-size: 0.7rem;
             font-weight: 500;
@@ -249,8 +249,8 @@
         }
 
         .btn:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(201, 162, 39, 0.08);
+            border-color: rgba(201, 162, 39, 0.5);
         }
 
         .btn:disabled {
@@ -268,8 +268,8 @@
         .spinner {
             width: 32px;
             height: 32px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-top: 1px solid rgba(201, 162, 39, 0.6);
             border-radius: 50%;
             animation: spin 1.2s linear infinite;
             margin: 0 auto 24px;
@@ -291,7 +291,7 @@
         .divider {
             width: 60px;
             height: 1px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(201, 162, 39, 0.3);
             margin: 0 auto 48px;
         }
 
@@ -304,7 +304,7 @@
         }
 
         .bt-control {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(201, 162, 39, 0.04);
             border-radius: 4px;
             padding: 10px 12px;
         }
@@ -334,7 +334,7 @@
             appearance: none;
             height: 4px;
             border-radius: 2px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(201, 162, 39, 0.12);
             outline: none;
         }
 
@@ -356,8 +356,8 @@
         }
 
         .bt-level-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(201, 162, 39, 0.03);
+            border: 1px solid rgba(201, 162, 39, 0.12);
             border-radius: 4px;
             padding: 10px 12px;
             cursor: pointer;
@@ -365,11 +365,11 @@
         }
 
         .bt-level-card:hover {
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(201, 162, 39, 0.3);
         }
 
         .bt-level-card.selected {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(201, 162, 39, 0.05);
         }
 
         .bt-level-price {
@@ -391,7 +391,7 @@
 
         .bt-score-bar {
             height: 3px;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(201, 162, 39, 0.08);
             border-radius: 2px;
             overflow: hidden;
         }
@@ -403,14 +403,14 @@
         }
 
         .bt-detail {
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(201, 162, 39, 0.15);
             border-radius: 4px;
             overflow: hidden;
         }
 
         .bt-detail-header {
             padding: 14px 18px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(201, 162, 39, 0.12);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -446,7 +446,7 @@
 
         .bt-detail-left {
             padding: 18px;
-            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            border-right: 1px solid rgba(201, 162, 39, 0.12);
         }
 
         .bt-detail-right {
@@ -466,7 +466,7 @@
             justify-content: space-between;
             align-items: baseline;
             padding: 5px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(201, 162, 39, 0.08);
         }
 
         .bt-stat-label {
@@ -515,7 +515,7 @@
         .bt-regime-bar {
             flex: 1;
             height: 8px;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(201, 162, 39, 0.08);
             border-radius: 4px;
             overflow: hidden;
         }
@@ -558,7 +558,7 @@
             }
             .bt-detail-left {
                 border-right: none;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                border-bottom: 1px solid rgba(201, 162, 39, 0.12);
             }
         }
 
@@ -599,6 +599,104 @@
                 padding: 32px 24px;
             }
         }
+
+        /* NHP Section */
+        .nhp-section {
+            margin-top: 32px;
+            padding: 24px;
+            background: rgba(201, 162, 39, 0.03);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 2px;
+        }
+        .nhp-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(201, 162, 39, 0.12);
+        }
+        .nhp-section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+        .nhp-status-badge {
+            font-size: 0.6rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            margin-left: 12px;
+        }
+        .nhp-bars-label {
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.5);
+        }
+        .nhp-intensity-chart {
+            width: 100%;
+            height: 160px;
+            position: relative;
+            margin: 16px 0;
+            border: 1px solid rgba(201, 162, 39, 0.12);
+            border-radius: 2px;
+            background: rgba(10, 14, 26, 0.5);
+        }
+        .nhp-intensity-chart canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .nhp-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1px;
+            background: rgba(201, 162, 39, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .nhp-summary-grid .metric {
+            text-align: center;
+            padding: 14px 8px;
+            background: #0a0e1a;
+        }
+        .nhp-summary-grid .metric-label {
+            font-size: 0.55rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.5);
+            margin-bottom: 6px;
+        }
+        .nhp-summary-grid .metric-value {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #e8e6e3;
+        }
+        .nhp-signals-list {
+            margin-top: 16px;
+        }
+        .nhp-signal-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(201, 162, 39, 0.06);
+            font-size: 0.75rem;
+        }
+        .nhp-signal-tag {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            padding: 2px 8px;
+            border-radius: 2px;
+        }
+        .nhp-signal-tag.enter { background: rgba(111, 207, 151, 0.15); color: #6fcf97; }
+        .nhp-signal-tag.exit { background: rgba(235, 87, 87, 0.15); color: #eb5757; }
+        .nhp-signal-tag.hold { background: rgba(201, 162, 39, 0.1); color: rgba(201, 162, 39, 0.5); }
+        .nhp-stat { color: rgba(255, 255, 255, 0.4); font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -631,6 +729,14 @@
                 </div>
 
                 <div class="controls">
+                    <div class="control-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" placeholder="Enter username">
+                    </div>
+                    <div class="control-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter password">
+                    </div>
                     <div class="control-group">
                         <label for="ticker">Ticker</label>
                         <input type="text" id="ticker" value="SPY" placeholder="SPY, NQ=F, etc.">
@@ -727,8 +833,8 @@
         const styleEl = document.createElement('style');
         styleEl.textContent = `
 .lstm-forecast-container {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(201, 162, 39, 0.03);
+    border: 1px solid rgba(201, 162, 39, 0.12);
     border-radius: 2px;
     padding: 32px;
     color: #e8e6e3;
@@ -741,7 +847,7 @@
     align-items: center;
     margin-bottom: 28px;
     padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(201, 162, 39, 0.12);
 }
 
 .lstm-forecast-header h3 {
@@ -758,8 +864,8 @@
     font-weight: 500;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(201, 162, 39, 0.5);
+    border: 1px solid rgba(201, 162, 39, 0.2);
     padding: 5px 12px;
     border-radius: 1px;
 }
@@ -772,7 +878,7 @@
     text-align: center;
     margin-bottom: 28px;
     padding: 32px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(201, 162, 39, 0.08);
 }
 
 .target-label {
@@ -816,8 +922,8 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(201, 162, 39, 0.05);
+    border: 1px solid rgba(201, 162, 39, 0.12);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -825,7 +931,7 @@
 .metric {
     text-align: center;
     padding: 20px 12px;
-    background: #0a0a0a;
+    background: #0a0e1a;
 }
 
 .metric-label {
@@ -847,8 +953,8 @@
 .lstm-forecast-level {
     margin: 24px 0;
     padding: 20px 24px;
-    border-left: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.02);
+    border-left: 1px solid rgba(201, 162, 39, 0.2);
+    background: rgba(201, 162, 39, 0.03);
 }
 
 .level-label {
@@ -885,8 +991,8 @@
 .lstm-forecast-attention {
     margin: 24px 0;
     padding: 24px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(201, 162, 39, 0.03);
+    border: 1px solid rgba(201, 162, 39, 0.08);
     border-radius: 2px;
 }
 
@@ -905,14 +1011,14 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1px;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(201, 162, 39, 0.05);
     border-radius: 2px;
     overflow: hidden;
 }
 
 .bound-item {
     padding: 16px;
-    background: #0a0a0a;
+    background: #0a0e1a;
 }
 
 .bound-label {
@@ -951,7 +1057,7 @@
     color: rgba(255, 255, 255, 0.4);
     margin-bottom: 8px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(201, 162, 39, 0.12);
 }
 
 .level-row {
@@ -960,7 +1066,7 @@
     gap: 8px;
     align-items: center;
     padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(201, 162, 39, 0.06);
     font-size: 0.8rem;
 }
 
@@ -992,14 +1098,14 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 1px;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(201, 162, 39, 0.05);
     border-radius: 2px;
     overflow: hidden;
 }
 
 .level-type {
     padding: 12px 16px;
-    background: #0a0a0a;
+    background: #0a0e1a;
     font-size: 0.8rem;
     text-align: center;
     color: rgba(255, 255, 255, 0.6);
@@ -1016,8 +1122,8 @@
 
 .lstm-forecast-error {
     padding: 32px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(201, 162, 39, 0.03);
+    border: 1px solid rgba(201, 162, 39, 0.12);
     border-left: 2px solid #eb5757;
     border-radius: 2px;
 }
@@ -1300,16 +1406,148 @@
             }
         }
 
+        // ===== NHP Rendering =====
+        function renderNhpSection(nhp) {
+            if (!nhp || !nhp.success) return '';
+            const summary = nhp.summary || {};
+            const signals = nhp.signals || [];
+            const trained = nhp.model_trained;
+            const lastSignals = signals.slice(-10);
+            const statusColor = trained ? '#6fcf97' : '#c9a227';
+            const statusText = trained ? 'Trained' : 'Price-Driven';
+
+            const signalRows = lastSignals.map(s => {
+                const cls = s.signal === 'ENTER' ? 'enter' : s.signal === 'EXIT' ? 'exit' : 'hold';
+                return `<div class="nhp-signal-row">
+                    <span class="nhp-signal-tag ${cls}">${s.signal}</span>
+                    <span class="nhp-stat">bar ${s.bar_index}</span>
+                    <span class="nhp-stat">\u03bb=${s.lambda_t.toFixed(3)}</span>
+                    <span class="nhp-stat">${(s.confidence * 100).toFixed(0)}%</span>
+                </div>`;
+            }).join('');
+
+            return `
+                <div class="nhp-section">
+                    <div class="nhp-section-header">
+                        <div>
+                            <span class="nhp-section-title">Neural Hawkes Process</span>
+                            <span class="nhp-status-badge" style="color:${statusColor};border:1px solid ${statusColor}33;">${statusText}</span>
+                        </div>
+                        <span class="nhp-bars-label">${nhp.bars || '?'} bars</span>
+                    </div>
+                    <div class="nhp-intensity-chart">
+                        <canvas id="nhpCanvas"></canvas>
+                    </div>
+                    <div class="nhp-summary-grid">
+                        <div class="metric">
+                            <div class="metric-label">Mean \u03bb</div>
+                            <div class="metric-value">${summary.mean_intensity?.toFixed(3) || '?'}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Max \u03bb</div>
+                            <div class="metric-value">${summary.max_intensity?.toFixed(3) || '?'}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Std \u03bb</div>
+                            <div class="metric-value">${summary.std_intensity?.toFixed(3) || '?'}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Enter</div>
+                            <div class="metric-value" style="color:#6fcf97">${summary.n_enter_signals ?? 0}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Exit</div>
+                            <div class="metric-value" style="color:#eb5757">${summary.n_exit_signals ?? 0}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Total</div>
+                            <div class="metric-value">${summary.n_total_signals ?? 0}</div>
+                        </div>
+                    </div>
+                    ${lastSignals.length > 0 ? `
+                        <div class="nhp-signals-list">
+                            <div style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,162,39,0.5);margin-bottom:8px;">Recent Signals (last ${lastSignals.length})</div>
+                            ${signalRows}
+                        </div>
+                    ` : ''}
+                </div>`;
+        }
+
+        function drawNhpChart(nhp) {
+            const canvas = document.getElementById('nhpCanvas');
+            if (!canvas || !nhp || !nhp.intensity_values) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = rect.height;
+
+            const vals = nhp.intensity_values;
+            const n = vals.length;
+            if (n < 2) return;
+
+            const maxV = Math.max(...vals) || 1;
+            const minV = Math.min(...vals);
+            const range = maxV - minV || 1;
+
+            const grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, 'rgba(201, 162, 39, 0.15)');
+            grad.addColorStop(1, 'rgba(201, 162, 39, 0.01)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            for (let i = 0; i < n; i++) {
+                const x = (i / (n - 1)) * W;
+                const y = H - ((vals[i] - minV) / range) * (H - 16) - 8;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.lineTo(W, H);
+            ctx.lineTo(0, H);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(201, 162, 39, 0.7)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let i = 0; i < n; i++) {
+                const x = (i / (n - 1)) * W;
+                const y = H - ((vals[i] - minV) / range) * (H - 16) - 8;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            (nhp.signals || []).forEach(s => {
+                const barIdx = s.bar_index || 0;
+                const x = n > 1 ? (barIdx / (n - 1)) * W : W / 2;
+                const color = s.signal === 'ENTER' ? '#6fcf97' : s.signal === 'EXIT' ? '#eb5757' : 'rgba(201,162,39,0.3)';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = color;
+                ctx.font = '9px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(s.signal === 'HOLD' ? '' : s.signal, x, 10);
+            });
+        }
+
         // Initialize
         const forecast = new LSTMForecast();
         const container = document.getElementById('forecastContainer');
         const btn = document.getElementById('getForecast');
+        const API_BASE = 'https://fartpie.onrender.com';
 
         btn.addEventListener('click', async () => {
             const ticker = document.getElementById('ticker').value.trim();
             const timeframe = document.getElementById('timeframe').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
             const lookback = 20;
-            const apiUrl = '';
 
             if (!ticker) {
                 alert('Please enter a ticker symbol');
@@ -1325,10 +1563,37 @@
             `;
 
             try {
-                forecast.apiBaseUrl = apiUrl || 'https://fartpie.onrender.com';
+                // Login if credentials provided
+                if (username && password) {
+                    await fetch(`${API_BASE}/api/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ username, password })
+                    });
+                }
+
+                forecast.apiBaseUrl = API_BASE;
                 const data = await forecast.getForecast(ticker, timeframe, lookback);
                 const formatted = forecast.formatForecast(data);
                 forecast.renderForecast(formatted, container);
+
+                // Fetch NHP signals in parallel
+                try {
+                    const nhpResp = await fetch(`${API_BASE}/api/nhp-signals?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`, {
+                        credentials: 'include'
+                    });
+                    if (nhpResp.ok) {
+                        const nhpData = await nhpResp.json();
+                        if (nhpData.success) {
+                            const nhpHtml = renderNhpSection(nhpData);
+                            container.insertAdjacentHTML('beforeend', nhpHtml);
+                            requestAnimationFrame(() => drawNhpChart(nhpData));
+                        }
+                    }
+                } catch (nhpErr) {
+                    console.warn('NHP fetch failed:', nhpErr);
+                }
             } catch (error) {
                 container.innerHTML = `
                     <div class="lstm-forecast-error">
