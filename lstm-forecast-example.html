@@ -675,11 +675,48 @@
             border: 1px solid rgba(201, 162, 39, 0.12);
             border-radius: 2px;
             background: rgba(10, 14, 26, 0.5);
+            cursor: crosshair;
         }
         .nhp-price-chart canvas {
             width: 100%;
             height: 100%;
             display: block;
+        }
+        /* Crosshair tooltip */
+        .nhp-crosshair-tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(10, 14, 26, 0.92);
+            border: 1px solid rgba(201, 162, 39, 0.35);
+            border-radius: 3px;
+            padding: 8px 12px;
+            font-size: 0.72rem;
+            color: #e8e6e3;
+            white-space: nowrap;
+            z-index: 10;
+            line-height: 1.5;
+        }
+        .nhp-crosshair-tooltip .tt-label {
+            color: rgba(201, 162, 39, 0.6);
+            font-size: 0.6rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .nhp-crosshair-tooltip .tt-val {
+            color: #e8e6e3;
+            font-weight: 500;
+        }
+        .nhp-crosshair-tooltip .tt-green { color: #6fcf97; }
+        .nhp-crosshair-tooltip .tt-red { color: #eb5757; }
+        .nhp-crosshair-tooltip .tt-gold { color: #c9a227; }
+        /* Scroll hint */
+        .nhp-scroll-hint {
+            font-size: 0.55rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.3);
+            text-align: right;
+            margin-bottom: 4px;
         }
         .nhp-chart-label {
             font-size: 0.6rem;
@@ -723,6 +760,7 @@
             border: 1px solid rgba(201, 162, 39, 0.12);
             border-radius: 2px;
             background: rgba(10, 14, 26, 0.5);
+            cursor: crosshair;
         }
         .nhp-intensity-chart canvas {
             width: 100%;
@@ -1678,9 +1716,13 @@
                         <label>NHP Timeframe</label>
                         <select id="nhpTimeframeSelect">${tfSelect}</select>
                     </div>
-                    <div class="nhp-chart-label">Price + Signals</div>
-                    <div class="nhp-price-chart">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="nhp-chart-label">Price + Signals</div>
+                        <div class="nhp-scroll-hint">scroll to pan · ctrl+scroll to zoom</div>
+                    </div>
+                    <div class="nhp-price-chart" id="nhpPriceChartContainer">
                         <canvas id="nhpPriceCanvas"></canvas>
+                        <div class="nhp-crosshair-tooltip" id="nhpTooltip" style="display:none;"></div>
                     </div>
                     <div class="nhp-accuracy-row">
                         <div class="nhp-accuracy-stat">
@@ -1697,8 +1739,9 @@
                         </div>
                     </div>
                     <div class="nhp-chart-label">Intensity \u03bb(t)</div>
-                    <div class="nhp-intensity-chart">
+                    <div class="nhp-intensity-chart" id="nhpIntensityChartContainer">
                         <canvas id="nhpCanvas"></canvas>
+                        <div class="nhp-crosshair-tooltip" id="nhpIntensityTooltip" style="display:none;"></div>
                     </div>
                     <div class="nhp-summary-grid">
                         <div class="metric">
@@ -1735,6 +1778,25 @@
                 </div>`;
         }
 
+        // ===== NHP Chart State =====
+        const nhpView = { start: 0, end: 0, data: null, minBars: 15 };
+
+        function nhpBarAtX(mouseX, canvasEl, pad) {
+            const rect = canvasEl.getBoundingClientRect();
+            const x = mouseX - rect.left;
+            const cW = rect.width - pad.left - pad.right;
+            const frac = (x - pad.left) / cW;
+            const visibleCount = nhpView.end - nhpView.start;
+            const idx = nhpView.start + Math.round(frac * (visibleCount - 1));
+            return Math.max(nhpView.start, Math.min(nhpView.end - 1, idx));
+        }
+
+        function redrawNhpCharts() {
+            if (!nhpView.data) return;
+            drawNhpPriceChart(nhpView.data);
+            drawNhpIntensityChart(nhpView.data);
+        }
+
         function drawNhpPriceChart(nhp) {
             const canvas = document.getElementById('nhpPriceCanvas');
             if (!canvas || !nhp || !nhp.ohlc) return;
@@ -1749,10 +1811,11 @@
             const cW = W - pad.left - pad.right;
             const cH = H - pad.top - pad.bottom;
 
-            const closes = nhp.ohlc.close;
-            const opens = nhp.ohlc.open;
-            const highs = nhp.ohlc.high;
-            const lows = nhp.ohlc.low;
+            const s = nhpView.start, e = nhpView.end;
+            const closes = nhp.ohlc.close.slice(s, e);
+            const opens = nhp.ohlc.open.slice(s, e);
+            const highs = nhp.ohlc.high.slice(s, e);
+            const lows = nhp.ohlc.low.slice(s, e);
             const n = closes.length;
             if (n < 2) return;
 
@@ -1760,9 +1823,9 @@
             const allMax = Math.max(...highs);
             const range = allMax - allMin || 1;
             const toY = v => pad.top + cH - ((v - allMin) / range) * cH;
-            const barW = Math.max(1, cW / n * 0.6);
+            const barW = Math.max(1, Math.min(8, cW / n * 0.6));
 
-            // Grid lines
+            // Grid lines + price axis
             ctx.strokeStyle = 'rgba(201,162,39,0.08)';
             ctx.lineWidth = 0.5;
             for (let i = 0; i < 5; i++) {
@@ -1793,25 +1856,24 @@
                 ctx.fillRect(x - barW / 2, bodyTop, barW, bodyH);
             }
 
-            // Signal markers
-            (nhp.signals || []).forEach(s => {
-                if (s.signal === 'HOLD') return;
-                const idx = s.bar_index;
-                if (idx >= n) return;
-                const x = pad.left + (idx / (n - 1)) * cW;
-                const isEnter = s.signal === 'ENTER';
+            // Signal markers (only visible ones)
+            (nhp.signals || []).forEach(sig => {
+                if (sig.signal === 'HOLD') return;
+                const idx = sig.bar_index;
+                if (idx < s || idx >= e) return;
+                const localIdx = idx - s;
+                const x = pad.left + (localIdx / (n - 1)) * cW;
+                const isEnter = sig.signal === 'ENTER';
                 const color = isEnter ? '#6fcf97' : '#eb5757';
-                const price = closes[idx];
+                const price = closes[localIdx];
                 const y = toY(price);
 
-                // Vertical dashed line
                 ctx.strokeStyle = color + '55';
                 ctx.lineWidth = 1;
                 ctx.setLineDash([3, 3]);
                 ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
                 ctx.setLineDash([]);
 
-                // Arrow marker
                 ctx.fillStyle = color;
                 ctx.beginPath();
                 if (isEnter) {
@@ -1821,14 +1883,24 @@
                 }
                 ctx.closePath(); ctx.fill();
 
-                // Label
                 ctx.font = 'bold 9px Inter, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(s.signal, x, isEnter ? y - 20 : y + 24);
+                ctx.fillText(sig.signal, x, isEnter ? y - 20 : y + 24);
             });
+
+            // Viewport indicator
+            const totalBars = nhp.ohlc.close.length;
+            if (e - s < totalBars) {
+                const barStart = pad.left + (s / totalBars) * cW;
+                const barEnd = pad.left + (e / totalBars) * cW;
+                ctx.fillStyle = 'rgba(201,162,39,0.15)';
+                ctx.fillRect(pad.left, H - 4, cW, 4);
+                ctx.fillStyle = 'rgba(201,162,39,0.5)';
+                ctx.fillRect(barStart, H - 4, barEnd - barStart, 4);
+            }
         }
 
-        function drawNhpChart(nhp) {
+        function drawNhpIntensityChart(nhp) {
             const canvas = document.getElementById('nhpCanvas');
             if (!canvas || !nhp || !nhp.intensity_values) return;
             const ctx = canvas.getContext('2d');
@@ -1838,14 +1910,17 @@
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
             const W = rect.width, H = rect.height;
+            const pad = { left: 60, right: 16 };
 
-            const vals = nhp.intensity_values;
+            const s = nhpView.start, e = nhpView.end;
+            const vals = nhp.intensity_values.slice(s, e);
             const n = vals.length;
             if (n < 2) return;
 
             const maxV = Math.max(...vals) || 1;
             const minV = Math.min(...vals);
             const range = maxV - minV || 1;
+            const cW = W - pad.left - pad.right;
 
             const grad = ctx.createLinearGradient(0, 0, 0, H);
             grad.addColorStop(0, 'rgba(201, 162, 39, 0.15)');
@@ -1853,12 +1928,12 @@
             ctx.fillStyle = grad;
             ctx.beginPath();
             for (let i = 0; i < n; i++) {
-                const x = (i / (n - 1)) * W;
+                const x = pad.left + (i / (n - 1)) * cW;
                 const y = H - ((vals[i] - minV) / range) * (H - 16) - 8;
                 i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             }
-            ctx.lineTo(W, H);
-            ctx.lineTo(0, H);
+            ctx.lineTo(pad.left + cW, H);
+            ctx.lineTo(pad.left, H);
             ctx.closePath();
             ctx.fill();
 
@@ -1866,29 +1941,223 @@
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             for (let i = 0; i < n; i++) {
-                const x = (i / (n - 1)) * W;
+                const x = pad.left + (i / (n - 1)) * cW;
                 const y = H - ((vals[i] - minV) / range) * (H - 16) - 8;
                 i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             }
             ctx.stroke();
 
-            (nhp.signals || []).forEach(s => {
-                const barIdx = s.bar_index || 0;
-                const x = n > 1 ? (barIdx / (n - 1)) * W : W / 2;
-                const color = s.signal === 'ENTER' ? '#6fcf97' : s.signal === 'EXIT' ? '#eb5757' : 'rgba(201,162,39,0.3)';
+            // Y-axis labels
+            ctx.fillStyle = 'rgba(201,162,39,0.35)';
+            ctx.font = '10px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(maxV.toFixed(2), pad.left - 6, 14);
+            ctx.fillText(minV.toFixed(2), pad.left - 6, H - 4);
+
+            (nhp.signals || []).forEach(sig => {
+                const barIdx = sig.bar_index || 0;
+                if (barIdx < s || barIdx >= e) return;
+                const localIdx = barIdx - s;
+                const x = pad.left + (localIdx / (n - 1)) * cW;
+                const color = sig.signal === 'ENTER' ? '#6fcf97' : sig.signal === 'EXIT' ? '#eb5757' : 'rgba(201,162,39,0.3)';
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 1;
                 ctx.setLineDash([3, 3]);
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, H);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
                 ctx.setLineDash([]);
                 ctx.fillStyle = color;
                 ctx.font = '9px Inter, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(s.signal === 'HOLD' ? '' : s.signal, x, 10);
+                ctx.fillText(sig.signal === 'HOLD' ? '' : sig.signal, x, 10);
             });
+        }
+
+        function setupNhpInteractions(nhp) {
+            nhpView.data = nhp;
+            nhpView.start = 0;
+            nhpView.end = nhp.ohlc.close.length;
+
+            const priceContainer = document.getElementById('nhpPriceChartContainer');
+            const intensityContainer = document.getElementById('nhpIntensityChartContainer');
+            const priceCanvas = document.getElementById('nhpPriceCanvas');
+            const intensityCanvas = document.getElementById('nhpCanvas');
+            const tooltip = document.getElementById('nhpTooltip');
+            const intTooltip = document.getElementById('nhpIntensityTooltip');
+            if (!priceContainer || !priceCanvas) return;
+
+            const pricePad = { top: 20, bottom: 20, left: 60, right: 16 };
+            const intPad = { left: 60, right: 16 };
+
+            // Scroll to pan, ctrl+scroll to zoom
+            function handleWheel(e) {
+                e.preventDefault();
+                const totalBars = nhp.ohlc.close.length;
+                const visibleBars = nhpView.end - nhpView.start;
+
+                if (e.ctrlKey || e.metaKey) {
+                    // Zoom
+                    const zoomAmt = Math.round(visibleBars * 0.15);
+                    if (e.deltaY > 0) {
+                        // Zoom out
+                        nhpView.start = Math.max(0, nhpView.start - zoomAmt);
+                        nhpView.end = Math.min(totalBars, nhpView.end + zoomAmt);
+                    } else {
+                        // Zoom in
+                        if (visibleBars > nhpView.minBars) {
+                            nhpView.start = Math.min(nhpView.end - nhpView.minBars, nhpView.start + zoomAmt);
+                            nhpView.end = Math.max(nhpView.start + nhpView.minBars, nhpView.end - zoomAmt);
+                        }
+                    }
+                } else {
+                    // Pan
+                    const panAmt = Math.max(1, Math.round(visibleBars * 0.1));
+                    if (e.deltaY > 0) {
+                        // Pan right (forward in time)
+                        const shift = Math.min(panAmt, totalBars - nhpView.end);
+                        nhpView.start += shift;
+                        nhpView.end += shift;
+                    } else {
+                        // Pan left (back in time)
+                        const shift = Math.min(panAmt, nhpView.start);
+                        nhpView.start -= shift;
+                        nhpView.end -= shift;
+                    }
+                }
+                redrawNhpCharts();
+            }
+
+            priceContainer.addEventListener('wheel', handleWheel, { passive: false });
+            if (intensityContainer) intensityContainer.addEventListener('wheel', handleWheel, { passive: false });
+
+            // Crosshair on price chart
+            priceCanvas.addEventListener('mousemove', (e) => {
+                const barIdx = nhpBarAtX(e.clientX, priceCanvas, pricePad);
+                const localIdx = barIdx - nhpView.start;
+                const rect = priceCanvas.getBoundingClientRect();
+                const mouseY = e.clientY - rect.top;
+
+                // Draw crosshair on price canvas
+                redrawNhpCharts();
+                const ctx = priceCanvas.getContext('2d');
+                const cW = rect.width - pricePad.left - pricePad.right;
+                const visN = nhpView.end - nhpView.start;
+                const x = pricePad.left + (localIdx / (visN - 1)) * cW;
+
+                ctx.strokeStyle = 'rgba(201,162,39,0.4)';
+                ctx.lineWidth = 0.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath(); ctx.moveTo(x, pricePad.top); ctx.lineTo(x, rect.height - pricePad.bottom); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(pricePad.left, mouseY); ctx.lineTo(rect.width - pricePad.right, mouseY); ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Dot on bar
+                ctx.fillStyle = '#c9a227';
+                ctx.beginPath(); ctx.arc(x, mouseY, 3, 0, Math.PI * 2); ctx.fill();
+
+                // Tooltip content
+                const ohlc = nhp.ohlc;
+                const close = ohlc.close[barIdx];
+                const open = ohlc.open[barIdx];
+                const high = ohlc.high[barIdx];
+                const low = ohlc.low[barIdx];
+                const lambda = nhp.intensity_values[barIdx];
+                const bull = close >= open;
+                const sigAtBar = (nhp.signals || []).find(s => s.bar_index === barIdx && s.signal !== 'HOLD');
+
+                let html = `<span class="tt-label">Bar</span> <span class="tt-val">${barIdx}</span><br>`;
+                html += `<span class="tt-label">O</span> <span class="tt-val">${open.toFixed(2)}</span> `;
+                html += `<span class="tt-label">H</span> <span class="tt-val">${high.toFixed(2)}</span><br>`;
+                html += `<span class="tt-label">L</span> <span class="tt-val">${low.toFixed(2)}</span> `;
+                html += `<span class="tt-label">C</span> <span class="tt-val ${bull ? 'tt-green' : 'tt-red'}">${close.toFixed(2)}</span><br>`;
+                html += `<span class="tt-label">\u03bb</span> <span class="tt-val tt-gold">${lambda.toFixed(3)}</span>`;
+                if (sigAtBar) {
+                    const sc = sigAtBar.signal === 'ENTER' ? 'tt-green' : 'tt-red';
+                    html += `<br><span class="tt-label">Signal</span> <span class="tt-val ${sc}">${sigAtBar.signal}</span>`;
+                }
+                tooltip.innerHTML = html;
+                tooltip.style.display = 'block';
+
+                // Position tooltip (flip if near edge)
+                const mouseLocalX = e.clientX - rect.left;
+                const tipW = 160;
+                tooltip.style.top = Math.max(4, mouseY - 70) + 'px';
+                tooltip.style.left = (mouseLocalX + tipW + 20 > rect.width ? mouseLocalX - tipW - 10 : mouseLocalX + 14) + 'px';
+
+                // Draw matching crosshair on intensity chart
+                if (intensityCanvas) {
+                    const iCtx = intensityCanvas.getContext('2d');
+                    const iRect = intensityCanvas.getBoundingClientRect();
+                    const iCW = iRect.width - intPad.left - intPad.right;
+                    const ix = intPad.left + (localIdx / (visN - 1)) * iCW;
+                    iCtx.strokeStyle = 'rgba(201,162,39,0.4)';
+                    iCtx.lineWidth = 0.5;
+                    iCtx.setLineDash([4, 4]);
+                    iCtx.beginPath(); iCtx.moveTo(ix, 0); iCtx.lineTo(ix, iRect.height); iCtx.stroke();
+                    iCtx.setLineDash([]);
+                    iCtx.fillStyle = '#c9a227';
+                    const iVals = nhp.intensity_values.slice(nhpView.start, nhpView.end);
+                    const iMin = Math.min(...iVals), iMax = Math.max(...iVals), iRange = iMax - iMin || 1;
+                    const iy = iRect.height - ((lambda - iMin) / iRange) * (iRect.height - 16) - 8;
+                    iCtx.beginPath(); iCtx.arc(ix, iy, 3, 0, Math.PI * 2); iCtx.fill();
+                }
+            });
+
+            priceCanvas.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+                if (intTooltip) intTooltip.style.display = 'none';
+                redrawNhpCharts();
+            });
+
+            // Crosshair on intensity chart
+            if (intensityCanvas) {
+                intensityCanvas.addEventListener('mousemove', (e) => {
+                    const barIdx = nhpBarAtX(e.clientX, intensityCanvas, intPad);
+                    const localIdx = barIdx - nhpView.start;
+                    const rect = intensityCanvas.getBoundingClientRect();
+                    const mouseY = e.clientY - rect.top;
+
+                    redrawNhpCharts();
+                    const ctx = intensityCanvas.getContext('2d');
+                    const cW = rect.width - intPad.left - intPad.right;
+                    const visN = nhpView.end - nhpView.start;
+                    const x = intPad.left + (localIdx / (visN - 1)) * cW;
+
+                    ctx.strokeStyle = 'rgba(201,162,39,0.4)';
+                    ctx.lineWidth = 0.5;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, rect.height); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(intPad.left, mouseY); ctx.lineTo(rect.width - intPad.right, mouseY); ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    const lambda = nhp.intensity_values[barIdx];
+                    if (intTooltip) {
+                        intTooltip.innerHTML = `<span class="tt-label">Bar</span> <span class="tt-val">${barIdx}</span> &nbsp; <span class="tt-label">\u03bb</span> <span class="tt-val tt-gold">${lambda.toFixed(3)}</span>`;
+                        intTooltip.style.display = 'block';
+                        const mouseLocalX = e.clientX - rect.left;
+                        intTooltip.style.top = Math.max(4, mouseY - 20) + 'px';
+                        intTooltip.style.left = (mouseLocalX + 140 > rect.width ? mouseLocalX - 140 : mouseLocalX + 14) + 'px';
+                    }
+
+                    // Sync crosshair on price chart
+                    if (priceCanvas) {
+                        const pCtx = priceCanvas.getContext('2d');
+                        const pRect = priceCanvas.getBoundingClientRect();
+                        const pCW = pRect.width - pricePad.left - pricePad.right;
+                        const px = pricePad.left + (localIdx / (visN - 1)) * pCW;
+                        pCtx.strokeStyle = 'rgba(201,162,39,0.4)';
+                        pCtx.lineWidth = 0.5;
+                        pCtx.setLineDash([4, 4]);
+                        pCtx.beginPath(); pCtx.moveTo(px, pricePad.top); pCtx.lineTo(px, pRect.height - pricePad.bottom); pCtx.stroke();
+                        pCtx.setLineDash([]);
+                    }
+                });
+
+                intensityCanvas.addEventListener('mouseleave', () => {
+                    if (intTooltip) intTooltip.style.display = 'none';
+                    tooltip.style.display = 'none';
+                    redrawNhpCharts();
+                });
+            }
         }
 
         // ===== Retry wrapper for Render cold starts =====
@@ -1969,8 +2238,12 @@
                     if (nhpData.success) {
                         heroLeft.innerHTML = renderNhpSection(nhpData, nhpTimeframe);
                         requestAnimationFrame(() => {
+                            nhpView.start = 0;
+                            nhpView.end = nhpData.ohlc ? nhpData.ohlc.close.length : (nhpData.intensity_values ? nhpData.intensity_values.length : 0);
+                            nhpView.data = nhpData;
                             drawNhpPriceChart(nhpData);
-                            drawNhpChart(nhpData);
+                            drawNhpIntensityChart(nhpData);
+                            setupNhpInteractions(nhpData);
                         });
                         // Attach timeframe change listener
                         const sel = document.getElementById('nhpTimeframeSelect');
