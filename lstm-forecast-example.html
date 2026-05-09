@@ -600,13 +600,14 @@
             }
         }
 
-        /* NHP Section */
+        /* NHP Section (left side, below hero text) */
         .nhp-section {
             margin-top: 32px;
-            padding: 24px;
+            padding: 20px;
             background: rgba(201, 162, 39, 0.03);
             border: 1px solid rgba(201, 162, 39, 0.15);
             border-radius: 2px;
+            max-width: 560px;
         }
         .nhp-section-header {
             display: flex;
@@ -650,7 +651,7 @@
         }
         .nhp-summary-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 1px;
             background: rgba(201, 162, 39, 0.08);
             border-radius: 2px;
@@ -720,6 +721,7 @@
                 <h1 class="hero-title">L'argent parle.</h1>
                 <p class="hero-desc">Nous traduisons.</p>
                 <div class="divider" style="margin: 0;"></div>
+                <div id="nhpContainer"></div>
             </div>
 
             <div class="forecast-panel">
@@ -1578,7 +1580,8 @@
                 const formatted = forecast.formatForecast(data);
                 forecast.renderForecast(formatted, container);
 
-                // Fetch NHP signals in parallel
+                // Fetch NHP signals and render on the left side
+                const nhpContainer = document.getElementById('nhpContainer');
                 try {
                     const nhpResp = await fetch(`${API_BASE}/api/nhp-signals?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`, {
                         credentials: 'include'
@@ -1586,8 +1589,7 @@
                     if (nhpResp.ok) {
                         const nhpData = await nhpResp.json();
                         if (nhpData.success) {
-                            const nhpHtml = renderNhpSection(nhpData);
-                            container.insertAdjacentHTML('beforeend', nhpHtml);
+                            nhpContainer.innerHTML = renderNhpSection(nhpData);
                             requestAnimationFrame(() => drawNhpChart(nhpData));
                         }
                     }
