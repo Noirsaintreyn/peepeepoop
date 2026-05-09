@@ -698,9 +698,123 @@
         .nhp-signal-tag.exit { background: rgba(235, 87, 87, 0.15); color: #eb5757; }
         .nhp-signal-tag.hold { background: rgba(201, 162, 39, 0.1); color: rgba(201, 162, 39, 0.5); }
         .nhp-stat { color: rgba(255, 255, 255, 0.4); font-size: 0.7rem; }
+
+        /* Login Page */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #0a0e1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-overlay.hidden { display: none; }
+        .login-box {
+            width: 100%;
+            max-width: 380px;
+            padding: 48px;
+            background: rgba(201, 162, 39, 0.03);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 2px;
+        }
+        .login-brand {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 2rem;
+            font-weight: 300;
+            color: #c9a227;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .login-tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            font-style: italic;
+            color: rgba(201, 162, 39, 0.4);
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .login-box .control-group {
+            margin-bottom: 20px;
+        }
+        .login-box .control-group label {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.5);
+            margin-bottom: 10px;
+        }
+        .login-box .control-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(201, 162, 39, 0.04);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 1px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .login-box .control-group input:focus {
+            outline: none;
+            border-color: rgba(201, 162, 39, 0.4);
+        }
+        .login-error {
+            font-size: 0.75rem;
+            color: #eb5757;
+            text-align: center;
+            margin-bottom: 16px;
+            min-height: 1.2em;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: transparent;
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            color: #c9a227;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            border-radius: 1px;
+        }
+        .login-btn:hover {
+            background: rgba(201, 162, 39, 0.08);
+            border-color: rgba(201, 162, 39, 0.5);
+        }
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <div class="login-brand">L'argent parle.</div>
+            <div class="login-tagline">Nous traduisons.</div>
+            <div class="control-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="Enter username" autocomplete="username">
+            </div>
+            <div class="control-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">
+            </div>
+            <div class="login-error" id="loginError"></div>
+            <button class="login-btn" id="loginBtn">Sign In</button>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-brand">L'argent parle.</div>
@@ -731,14 +845,6 @@
                 </div>
 
                 <div class="controls">
-                    <div class="control-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" placeholder="Enter username">
-                    </div>
-                    <div class="control-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" placeholder="Enter password">
-                    </div>
                     <div class="control-group">
                         <label for="ticker">Ticker</label>
                         <input type="text" id="ticker" value="SPY" placeholder="SPY, NQ=F, etc.">
@@ -1161,36 +1267,46 @@
             }
 
             async getForecast(ticker, timeframe = '5m', lookback = 20) {
-                try {
-                    const url = new URL(`${this.apiBaseUrl}/api/lstm-forecast`);
-                    url.searchParams.set('ticker', ticker);
-                    url.searchParams.set('timeframe', timeframe);
-                    url.searchParams.set('lookback', lookback.toString());
+                const url = new URL(`${this.apiBaseUrl}/api/lstm-forecast`);
+                url.searchParams.set('ticker', ticker);
+                url.searchParams.set('timeframe', timeframe);
+                url.searchParams.set('lookback', lookback.toString());
 
-                    const headers = {
-                        'Content-Type': 'application/json'
-                    };
+                const headers = { 'Content-Type': 'application/json' };
+                if (this.authToken) {
+                    headers['Authorization'] = `Bearer ${this.authToken}`;
+                }
 
-                    if (this.authToken) {
-                        headers['Authorization'] = `Bearer ${this.authToken}`;
+                const maxRetries = 3;
+                for (let attempt = 0; attempt < maxRetries; attempt++) {
+                    try {
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 60000);
+                        const response = await fetch(url.toString(), {
+                            method: 'GET',
+                            headers: headers,
+                            credentials: 'include',
+                            signal: controller.signal
+                        });
+                        clearTimeout(timeout);
+
+                        if (!response.ok) {
+                            if (response.status >= 500 && attempt < maxRetries - 1) {
+                                await new Promise(r => setTimeout(r, 3000));
+                                continue;
+                            }
+                            const error = await response.json();
+                            throw new Error(error.error || `HTTP ${response.status}`);
+                        }
+
+                        return await response.json();
+                    } catch (error) {
+                        if (attempt === maxRetries - 1) {
+                            console.error('LSTM Forecast Error:', error);
+                            throw error;
+                        }
+                        await new Promise(r => setTimeout(r, 3000));
                     }
-
-                    const response = await fetch(url.toString(), {
-                        method: 'GET',
-                        headers: headers,
-                        credentials: 'include'
-                    });
-
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.error || `HTTP ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    return data;
-                } catch (error) {
-                    console.error('LSTM Forecast Error:', error);
-                    throw error;
                 }
             }
 
@@ -1538,17 +1654,71 @@
             });
         }
 
-        // Initialize
+        // ===== Retry wrapper for Render cold starts =====
+        async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 60000);
+                    const resp = await fetch(url, { ...options, signal: controller.signal });
+                    clearTimeout(timeout);
+                    if (resp.ok || resp.status < 500) return resp;
+                    if (i < retries - 1) await new Promise(r => setTimeout(r, delay));
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            }
+        }
+
+        // ===== Login =====
+        const API_BASE = 'https://fartpie.onrender.com';
+        const loginOverlay = document.getElementById('loginOverlay');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+
+        loginBtn.addEventListener('click', doLogin);
+        document.getElementById('login-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        async function doLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            if (!username || !password) {
+                loginError.textContent = 'Please enter username and password';
+                return;
+            }
+            loginBtn.disabled = true;
+            loginError.textContent = 'Connecting...';
+            try {
+                const resp = await fetchWithRetry(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    loginOverlay.classList.add('hidden');
+                } else {
+                    loginError.textContent = data.message || 'Invalid credentials';
+                }
+            } catch (err) {
+                loginError.textContent = 'Connection failed — server may be starting up, try again';
+            } finally {
+                loginBtn.disabled = false;
+            }
+        }
+
+        // ===== Forecast =====
         const forecast = new LSTMForecast();
         const container = document.getElementById('forecastContainer');
         const btn = document.getElementById('getForecast');
-        const API_BASE = 'https://fartpie.onrender.com';
 
         btn.addEventListener('click', async () => {
             const ticker = document.getElementById('ticker').value.trim();
             const timeframe = document.getElementById('timeframe').value;
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
             const lookback = 20;
 
             if (!ticker) {
@@ -1560,21 +1730,11 @@
             container.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>Analyzing...</p>
+                    <p>Analyzing... (server may take a moment to wake up)</p>
                 </div>
             `;
 
             try {
-                // Login if credentials provided
-                if (username && password) {
-                    await fetch(`${API_BASE}/api/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ username, password })
-                    });
-                }
-
                 forecast.apiBaseUrl = API_BASE;
                 const data = await forecast.getForecast(ticker, timeframe, lookback);
                 const formatted = forecast.formatForecast(data);
@@ -1583,7 +1743,7 @@
                 // Fetch NHP signals and render on the left side
                 const nhpContainer = document.getElementById('nhpContainer');
                 try {
-                    const nhpResp = await fetch(`${API_BASE}/api/nhp-signals?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`, {
+                    const nhpResp = await fetchWithRetry(`${API_BASE}/api/nhp-signals?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`, {
                         credentials: 'include'
                     });
                     if (nhpResp.ok) {
@@ -1601,6 +1761,7 @@
                     <div class="lstm-forecast-error">
                         <h3>Error</h3>
                         <p>${error.message}</p>
+                        <p class="suggestion">The server may be waking up — try again in a few seconds.</p>
                     </div>
                 `;
             } finally {
