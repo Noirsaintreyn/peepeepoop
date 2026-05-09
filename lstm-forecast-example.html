@@ -92,11 +92,11 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 80px;
-            align-items: center;
+            align-items: start;
         }
 
         .hero-text {
-            max-width: 560px;
+            width: 100%;
         }
 
         .hero-label {
@@ -600,46 +600,126 @@
             }
         }
 
-        /* NHP Section (left side, below hero text) */
+        /* NHP Section (left side, fills entire area) */
         .nhp-section {
-            margin-top: 32px;
-            padding: 20px;
+            padding: 24px;
             background: rgba(201, 162, 39, 0.03);
             border: 1px solid rgba(201, 162, 39, 0.15);
             border-radius: 2px;
-            max-width: 560px;
+            width: 100%;
         }
         .nhp-section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
             border-bottom: 1px solid rgba(201, 162, 39, 0.12);
         }
         .nhp-section-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             color: #fff;
         }
         .nhp-status-badge {
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            padding: 3px 8px;
+            padding: 4px 10px;
             margin-left: 12px;
         }
         .nhp-bars-label {
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: rgba(201, 162, 39, 0.5);
         }
+        /* NHP Timeframe Selector */
+        .nhp-tf-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .nhp-tf-selector label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.6);
+        }
+        .nhp-tf-selector select {
+            background: rgba(201, 162, 39, 0.08);
+            border: 1px solid rgba(201, 162, 39, 0.25);
+            color: #c9a227;
+            padding: 6px 12px;
+            border-radius: 2px;
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            outline: none;
+        }
+        .nhp-tf-selector select:focus {
+            border-color: #c9a227;
+        }
+        .nhp-tf-selector select option {
+            background: #0a0e1a;
+            color: #e8e6e3;
+        }
+        /* Price chart with signal overlays */
+        .nhp-price-chart {
+            width: 100%;
+            height: 260px;
+            position: relative;
+            margin: 0 0 6px;
+            border: 1px solid rgba(201, 162, 39, 0.12);
+            border-radius: 2px;
+            background: rgba(10, 14, 26, 0.5);
+        }
+        .nhp-price-chart canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .nhp-chart-label {
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.4);
+            margin-bottom: 6px;
+        }
+        /* Accuracy stats row */
+        .nhp-accuracy-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .nhp-accuracy-stat {
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+            padding: 10px 8px;
+            background: rgba(201, 162, 39, 0.05);
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            border-radius: 2px;
+        }
+        .nhp-accuracy-stat .acc-label {
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.5);
+            margin-bottom: 4px;
+        }
+        .nhp-accuracy-stat .acc-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
         .nhp-intensity-chart {
             width: 100%;
-            height: 160px;
+            height: 140px;
             position: relative;
-            margin: 16px 0;
+            margin: 0 0 16px;
             border: 1px solid rgba(201, 162, 39, 0.12);
             border-radius: 2px;
             background: rgba(10, 14, 26, 0.5);
@@ -664,7 +744,7 @@
             background: #0a0e1a;
         }
         .nhp-summary-grid .metric-label {
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             font-weight: 500;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -672,7 +752,7 @@
             margin-bottom: 6px;
         }
         .nhp-summary-grid .metric-value {
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 500;
             color: #e8e6e3;
         }
@@ -683,21 +763,21 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 6px 0;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(201, 162, 39, 0.06);
-            font-size: 0.75rem;
+            font-size: 0.85rem;
         }
         .nhp-signal-tag {
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             font-weight: 600;
             letter-spacing: 0.08em;
-            padding: 2px 8px;
+            padding: 3px 10px;
             border-radius: 2px;
         }
         .nhp-signal-tag.enter { background: rgba(111, 207, 151, 0.15); color: #6fcf97; }
         .nhp-signal-tag.exit { background: rgba(235, 87, 87, 0.15); color: #eb5757; }
         .nhp-signal-tag.hold { background: rgba(201, 162, 39, 0.1); color: rgba(201, 162, 39, 0.5); }
-        .nhp-stat { color: rgba(255, 255, 255, 0.4); font-size: 0.7rem; }
+        .nhp-stat { color: rgba(255, 255, 255, 0.4); font-size: 0.8rem; }
 
         /* Login Page */
         .login-overlay {
@@ -1525,14 +1605,53 @@
         }
 
         // ===== NHP Rendering =====
-        function renderNhpSection(nhp) {
+        function computeAccuracy(nhp) {
+            const closes = nhp.ohlc?.close;
+            const signals = nhp.signals || [];
+            if (!closes || closes.length < 5) return { enter: null, exit: null, overall: null, enterTotal: 0, exitTotal: 0 };
+            const lookAhead = Math.min(5, Math.floor(closes.length / 4));
+            let enterCorrect = 0, enterTotal = 0, exitCorrect = 0, exitTotal = 0;
+            signals.forEach(s => {
+                const idx = s.bar_index;
+                if (idx + lookAhead >= closes.length) return;
+                const futurePrice = closes[idx + lookAhead];
+                const currentPrice = closes[idx];
+                if (s.signal === 'ENTER') {
+                    enterTotal++;
+                    if (futurePrice > currentPrice) enterCorrect++;
+                } else if (s.signal === 'EXIT') {
+                    exitTotal++;
+                    if (futurePrice < currentPrice) exitCorrect++;
+                }
+            });
+            const total = enterTotal + exitTotal;
+            const correct = enterCorrect + exitCorrect;
+            return {
+                enter: enterTotal > 0 ? ((enterCorrect / enterTotal) * 100).toFixed(0) : null,
+                exit: exitTotal > 0 ? ((exitCorrect / exitTotal) * 100).toFixed(0) : null,
+                overall: total > 0 ? ((correct / total) * 100).toFixed(0) : null,
+                enterTotal, exitTotal,
+                enterCorrect, exitCorrect,
+            };
+        }
+
+        function renderNhpSection(nhp, selectedTf) {
             if (!nhp || !nhp.success) return '';
             const summary = nhp.summary || {};
             const signals = nhp.signals || [];
             const trained = nhp.model_trained;
-            const lastSignals = signals.slice(-10);
+            const lastSignals = signals.slice(-12);
             const statusColor = trained ? '#6fcf97' : '#c9a227';
             const statusText = trained ? 'Trained' : 'Price-Driven';
+            const acc = computeAccuracy(nhp);
+
+            const tfOptions = [
+                {v:'1m',l:'1m'},{v:'5m',l:'5m'},{v:'15m',l:'15m'},
+                {v:'1h',l:'1h'},{v:'4h',l:'4h'},{v:'1d',l:'1D'}
+            ];
+            const tfSelect = tfOptions.map(o =>
+                `<option value="${o.v}"${o.v === selectedTf ? ' selected' : ''}>${o.l}</option>`
+            ).join('');
 
             const signalRows = lastSignals.map(s => {
                 const cls = s.signal === 'ENTER' ? 'enter' : s.signal === 'EXIT' ? 'exit' : 'hold';
@@ -1544,6 +1663,8 @@
                 </div>`;
             }).join('');
 
+            const overallColor = acc.overall !== null ? (parseInt(acc.overall) >= 50 ? '#6fcf97' : '#eb5757') : '#e8e6e3';
+
             return `
                 <div class="nhp-section">
                     <div class="nhp-section-header">
@@ -1553,6 +1674,29 @@
                         </div>
                         <span class="nhp-bars-label">${nhp.bars || '?'} bars</span>
                     </div>
+                    <div class="nhp-tf-selector">
+                        <label>NHP Timeframe</label>
+                        <select id="nhpTimeframeSelect">${tfSelect}</select>
+                    </div>
+                    <div class="nhp-chart-label">Price + Signals</div>
+                    <div class="nhp-price-chart">
+                        <canvas id="nhpPriceCanvas"></canvas>
+                    </div>
+                    <div class="nhp-accuracy-row">
+                        <div class="nhp-accuracy-stat">
+                            <div class="acc-label">Overall Accuracy</div>
+                            <div class="acc-value" style="color:${overallColor}">${acc.overall !== null ? acc.overall + '%' : '—'}</div>
+                        </div>
+                        <div class="nhp-accuracy-stat">
+                            <div class="acc-label">Enter Accuracy</div>
+                            <div class="acc-value" style="color:#6fcf97">${acc.enter !== null ? acc.enter + '% (' + acc.enterCorrect + '/' + acc.enterTotal + ')' : '—'}</div>
+                        </div>
+                        <div class="nhp-accuracy-stat">
+                            <div class="acc-label">Exit Accuracy</div>
+                            <div class="acc-value" style="color:#eb5757">${acc.exit !== null ? acc.exit + '% (' + acc.exitCorrect + '/' + acc.exitTotal + ')' : '—'}</div>
+                        </div>
+                    </div>
+                    <div class="nhp-chart-label">Intensity \u03bb(t)</div>
                     <div class="nhp-intensity-chart">
                         <canvas id="nhpCanvas"></canvas>
                     </div>
@@ -1589,6 +1733,99 @@
                         </div>
                     ` : ''}
                 </div>`;
+        }
+
+        function drawNhpPriceChart(nhp) {
+            const canvas = document.getElementById('nhpPriceCanvas');
+            if (!canvas || !nhp || !nhp.ohlc) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = rect.height;
+            const pad = { top: 20, bottom: 20, left: 60, right: 16 };
+            const cW = W - pad.left - pad.right;
+            const cH = H - pad.top - pad.bottom;
+
+            const closes = nhp.ohlc.close;
+            const opens = nhp.ohlc.open;
+            const highs = nhp.ohlc.high;
+            const lows = nhp.ohlc.low;
+            const n = closes.length;
+            if (n < 2) return;
+
+            const allMin = Math.min(...lows);
+            const allMax = Math.max(...highs);
+            const range = allMax - allMin || 1;
+            const toY = v => pad.top + cH - ((v - allMin) / range) * cH;
+            const barW = Math.max(1, cW / n * 0.6);
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(201,162,39,0.08)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < 5; i++) {
+                const y = pad.top + (cH / 4) * i;
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+                const price = allMax - (range / 4) * i;
+                ctx.fillStyle = 'rgba(201,162,39,0.35)';
+                ctx.font = '10px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(price.toFixed(2), pad.left - 6, y + 3);
+            }
+
+            // Candles
+            for (let i = 0; i < n; i++) {
+                const x = pad.left + (i / (n - 1)) * cW;
+                const bull = closes[i] >= opens[i];
+                const color = bull ? '#6fcf97' : '#eb5757';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, toY(highs[i]));
+                ctx.lineTo(x, toY(lows[i]));
+                ctx.stroke();
+                const bodyTop = toY(Math.max(opens[i], closes[i]));
+                const bodyBot = toY(Math.min(opens[i], closes[i]));
+                const bodyH = Math.max(1, bodyBot - bodyTop);
+                ctx.fillStyle = bull ? 'rgba(111,207,151,0.6)' : 'rgba(235,87,87,0.6)';
+                ctx.fillRect(x - barW / 2, bodyTop, barW, bodyH);
+            }
+
+            // Signal markers
+            (nhp.signals || []).forEach(s => {
+                if (s.signal === 'HOLD') return;
+                const idx = s.bar_index;
+                if (idx >= n) return;
+                const x = pad.left + (idx / (n - 1)) * cW;
+                const isEnter = s.signal === 'ENTER';
+                const color = isEnter ? '#6fcf97' : '#eb5757';
+                const price = closes[idx];
+                const y = toY(price);
+
+                // Vertical dashed line
+                ctx.strokeStyle = color + '55';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Arrow marker
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                if (isEnter) {
+                    ctx.moveTo(x, y - 8); ctx.lineTo(x - 5, y - 16); ctx.lineTo(x + 5, y - 16);
+                } else {
+                    ctx.moveTo(x, y + 8); ctx.lineTo(x - 5, y + 16); ctx.lineTo(x + 5, y + 16);
+                }
+                ctx.closePath(); ctx.fill();
+
+                // Label
+                ctx.font = 'bold 9px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(s.signal, x, isEnter ? y - 20 : y + 24);
+            });
         }
 
         function drawNhpChart(nhp) {
@@ -1711,6 +1948,51 @@
             }
         }
 
+        // ===== NHP Independent Fetch =====
+        let nhpTimeframe = '1d';
+        let currentTicker = 'SPY';
+        let nhpLoaded = false;
+
+        async function fetchAndRenderNhp() {
+            const heroLeft = document.getElementById('heroLeft');
+            heroLeft.innerHTML = `
+                <div class="nhp-section" style="text-align:center;padding:40px;">
+                    <div class="spinner" style="margin:0 auto 12px;"></div>
+                    <div style="color:rgba(201,162,39,0.5);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">Loading NHP ${nhpTimeframe}...</div>
+                </div>`;
+            try {
+                const nhpResp = await fetchWithRetry(`${API_BASE}/api/nhp-signals?ticker=${encodeURIComponent(currentTicker)}&timeframe=${encodeURIComponent(nhpTimeframe)}`, {
+                    credentials: 'include'
+                });
+                if (nhpResp && nhpResp.ok) {
+                    const nhpData = await nhpResp.json();
+                    if (nhpData.success) {
+                        heroLeft.innerHTML = renderNhpSection(nhpData, nhpTimeframe);
+                        requestAnimationFrame(() => {
+                            drawNhpPriceChart(nhpData);
+                            drawNhpChart(nhpData);
+                        });
+                        // Attach timeframe change listener
+                        const sel = document.getElementById('nhpTimeframeSelect');
+                        if (sel) {
+                            sel.addEventListener('change', (e) => {
+                                nhpTimeframe = e.target.value;
+                                fetchAndRenderNhp();
+                            });
+                        }
+                        nhpLoaded = true;
+                    }
+                }
+            } catch (nhpErr) {
+                console.warn('NHP fetch failed:', nhpErr);
+                heroLeft.innerHTML = `
+                    <div class="nhp-section" style="text-align:center;padding:40px;">
+                        <div style="color:#eb5757;font-size:0.85rem;">NHP load failed — server may be waking up</div>
+                        <div style="color:rgba(201,162,39,0.4);font-size:0.7rem;margin-top:8px;cursor:pointer;text-decoration:underline;" onclick="fetchAndRenderNhp()">Retry</div>
+                    </div>`;
+            }
+        }
+
         // ===== Forecast =====
         const forecast = new LSTMForecast();
         const container = document.getElementById('forecastContainer');
@@ -1726,6 +2008,8 @@
                 return;
             }
 
+            currentTicker = ticker;
+
             btn.disabled = true;
             container.innerHTML = `
                 <div class="loading">
@@ -1740,22 +2024,8 @@
                 const formatted = forecast.formatForecast(data);
                 forecast.renderForecast(formatted, container);
 
-                // Fetch NHP signals and replace the left hero text
-                const heroLeft = document.getElementById('heroLeft');
-                try {
-                    const nhpResp = await fetchWithRetry(`${API_BASE}/api/nhp-signals?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`, {
-                        credentials: 'include'
-                    });
-                    if (nhpResp.ok) {
-                        const nhpData = await nhpResp.json();
-                        if (nhpData.success) {
-                            heroLeft.innerHTML = renderNhpSection(nhpData);
-                            requestAnimationFrame(() => drawNhpChart(nhpData));
-                        }
-                    }
-                } catch (nhpErr) {
-                    console.warn('NHP fetch failed:', nhpErr);
-                }
+                // Fetch NHP independently with its own timeframe
+                fetchAndRenderNhp();
             } catch (error) {
                 container.innerHTML = `
                     <div class="lstm-forecast-error">
