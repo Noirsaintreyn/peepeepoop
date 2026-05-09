@@ -831,11 +831,10 @@
     <section class="hero">
         <div class="hero-bg"></div>
         <div class="hero-content">
-            <div class="hero-text">
+            <div class="hero-text" id="heroLeft">
                 <h1 class="hero-title">L'argent parle.</h1>
                 <p class="hero-desc">Nous traduisons.</p>
                 <div class="divider" style="margin: 0;"></div>
-                <div id="nhpContainer"></div>
             </div>
 
             <div class="forecast-panel">
@@ -1740,8 +1739,8 @@
                 const formatted = forecast.formatForecast(data);
                 forecast.renderForecast(formatted, container);
 
-                // Fetch NHP signals and render on the left side
-                const nhpContainer = document.getElementById('nhpContainer');
+                // Fetch NHP signals and replace the left hero text
+                const heroLeft = document.getElementById('heroLeft');
                 try {
                     const nhpResp = await fetchWithRetry(`${API_BASE}/api/nhp-signals?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`, {
                         credentials: 'include'
@@ -1749,7 +1748,7 @@
                     if (nhpResp.ok) {
                         const nhpData = await nhpResp.json();
                         if (nhpData.success) {
-                            nhpContainer.innerHTML = renderNhpSection(nhpData);
+                            heroLeft.innerHTML = renderNhpSection(nhpData);
                             requestAnimationFrame(() => drawNhpChart(nhpData));
                         }
                     }
