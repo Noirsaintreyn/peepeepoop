@@ -1710,7 +1710,7 @@
                             <span class="nhp-section-title">Neural Hawkes Process</span>
                             <span class="nhp-status-badge" style="color:${statusColor};border:1px solid ${statusColor}33;">${statusText}</span>
                         </div>
-                        <span class="nhp-bars-label">${nhp.bars || '?'} bars</span>
+                        <span class="nhp-bars-label">${nhp.bars || '?'} bars${nhp.data_source && nhp.data_source !== 'yfinance' ? ' · <span style="color:#6fcf97;">GDrive+YF</span>' : ''}</span>
                     </div>
                     <div class="nhp-tf-selector">
                         <label>NHP Timeframe</label>
