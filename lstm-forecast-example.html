@@ -1645,23 +1645,64 @@
         // ===== NHP Rendering =====
         function computeAccuracy(nhp) {
             const closes = nhp.ohlc?.close;
+            const lows = nhp.ohlc?.low;
+            const highs = nhp.ohlc?.high;
             const signals = nhp.signals || [];
-            if (!closes || closes.length < 5) return { enter: null, exit: null, overall: null, enterTotal: 0, exitTotal: 0 };
-            const lookAhead = Math.min(5, Math.floor(closes.length / 4));
+            if (!closes || !lows || !highs || closes.length < 5)
+                return { enter: null, exit: null, overall: null, enterTotal: 0, exitTotal: 0 };
+
             let enterCorrect = 0, enterTotal = 0, exitCorrect = 0, exitTotal = 0;
+
             signals.forEach(s => {
                 const idx = s.bar_index;
-                if (idx + lookAhead >= closes.length) return;
-                const futurePrice = closes[idx + lookAhead];
-                const currentPrice = closes[idx];
+                if (idx + 1 >= closes.length) return;
+                const entryPrice = closes[idx];
+
                 if (s.signal === 'ENTER') {
                     enterTotal++;
-                    if (futurePrice > currentPrice) enterCorrect++;
+                    // Scan forward: win if price rises 1%+ before drawing down 1%+
+                    // A drawdown below entry means loss
+                    let resolved = false;
+                    for (let j = idx + 1; j < closes.length; j++) {
+                        if (lows[j] < entryPrice) {
+                            // Price broke below entry — loss (drawdown)
+                            resolved = true;
+                            break;
+                        }
+                        if (highs[j] > entryPrice * 1.005) {
+                            // Price moved up 0.5%+ without breaking below entry — win
+                            enterCorrect++;
+                            resolved = true;
+                            break;
+                        }
+                    }
+                    // If unresolved (never broke below and never hit target), check last close
+                    if (!resolved && closes[closes.length - 1] >= entryPrice) {
+                        enterCorrect++;
+                    }
                 } else if (s.signal === 'EXIT') {
                     exitTotal++;
-                    if (futurePrice < currentPrice) exitCorrect++;
+                    // Scan forward: win if price drops below entry before rallying above
+                    let resolved = false;
+                    for (let j = idx + 1; j < closes.length; j++) {
+                        if (highs[j] > entryPrice) {
+                            // Price rallied above exit price — loss
+                            resolved = true;
+                            break;
+                        }
+                        if (lows[j] < entryPrice * 0.995) {
+                            // Price dropped 0.5%+ without rallying above — win
+                            exitCorrect++;
+                            resolved = true;
+                            break;
+                        }
+                    }
+                    if (!resolved && closes[closes.length - 1] <= entryPrice) {
+                        exitCorrect++;
+                    }
                 }
             });
+
             const total = enterTotal + exitTotal;
             const correct = enterCorrect + exitCorrect;
             return {
