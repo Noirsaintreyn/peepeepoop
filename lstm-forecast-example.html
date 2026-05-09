@@ -1276,11 +1276,11 @@
                     headers['Authorization'] = `Bearer ${this.authToken}`;
                 }
 
-                const maxRetries = 3;
+                const maxRetries = 4;
                 for (let attempt = 0; attempt < maxRetries; attempt++) {
                     try {
                         const controller = new AbortController();
-                        const timeout = setTimeout(() => controller.abort(), 60000);
+                        const timeout = setTimeout(() => controller.abort(), 90000);
                         const response = await fetch(url.toString(), {
                             method: 'GET',
                             headers: headers,
@@ -1291,11 +1291,12 @@
 
                         if (!response.ok) {
                             if (response.status >= 500 && attempt < maxRetries - 1) {
-                                await new Promise(r => setTimeout(r, 3000));
+                                await new Promise(r => setTimeout(r, 5000));
                                 continue;
                             }
-                            const error = await response.json();
-                            throw new Error(error.error || `HTTP ${response.status}`);
+                            let errMsg = `HTTP ${response.status}`;
+                            try { const e = await response.json(); errMsg = e.error || errMsg; } catch(_) {}
+                            throw new Error(errMsg);
                         }
 
                         return await response.json();
@@ -1304,7 +1305,7 @@
                             console.error('LSTM Forecast Error:', error);
                             throw error;
                         }
-                        await new Promise(r => setTimeout(r, 3000));
+                        await new Promise(r => setTimeout(r, 5000));
                     }
                 }
             }
@@ -1654,11 +1655,11 @@
         }
 
         // ===== Retry wrapper for Render cold starts =====
-        async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
+        async function fetchWithRetry(url, options = {}, retries = 4, delay = 5000) {
             for (let i = 0; i < retries; i++) {
                 try {
                     const controller = new AbortController();
-                    const timeout = setTimeout(() => controller.abort(), 60000);
+                    const timeout = setTimeout(() => controller.abort(), 90000);
                     const resp = await fetch(url, { ...options, signal: controller.signal });
                     clearTimeout(timeout);
                     if (resp.ok || resp.status < 500) return resp;
@@ -1729,7 +1730,7 @@
             container.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>Analyzing... (server may take a moment to wake up)</p>
+                    <p>Analyzing... this may take up to a minute if the server is waking up</p>
                 </div>
             `;
 
