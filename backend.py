@@ -3769,6 +3769,172 @@ def calculate_vbp_levels(hist_df, timeframe='1d', current_price=None):
         print(f"⚠ VbP level calculation failed: {e}")
         return []
 
+
+def run_vbp_engine(hist_df, timeframe='1d', current_price=None):
+    """
+    Run the VbP LevelEngine ONCE and return the full result dict.
+    This is the canonical entry point — call this once per forecast and pass
+    the result to calculate_vbp_levels_from_result() and enrich_levels_with_vbp().
+    
+    Returns dict with:
+        - 'vbp': pd.Series of {price: volume}
+        - 'poc', 'vah', 'val': float anchor prices
+        - 'atr': float
+        - 'current_price': float
+        - 'levels': pd.DataFrame of merged scored levels
+        - 'engine_ok': bool (True if engine ran cleanly)
+    Returns None if VbP unavailable or input invalid.
+    """
+    if not VBP_AVAILABLE or VbpLevelEngine is None:
+        return None
+    if hist_df is None or hist_df.empty or len(hist_df) < 50:
+        return None
+    
+    try:
+        spot = float(hist_df['Close'].iloc[-1])
+        if spot >= 1000:
+            tick = 0.25
+        elif spot >= 50:
+            tick = 0.05
+        elif spot >= 1:
+            tick = 0.01
+        else:
+            tick = max(spot * 0.0001, 1e-6)
+        
+        lookback_map = {'1m': 300, '5m': 300, '15m': 300, '1h': 400, '4h': 400, '1d': 500, '1wk': 200}
+        lookback = min(lookback_map.get(timeframe, 400), len(hist_df))
+        
+        profile = VbpInstrumentProfile(tick=tick)
+        engine = VbpLevelEngine(profile=profile)
+        result = engine.run(hist_df, lookback_bars=lookback)
+        result['engine_ok'] = True
+        return result
+    except Exception as e:
+        print(f"⚠ VbP engine run failed: {e}")
+        return None
+
+
+def calculate_vbp_levels_from_result(vbp_result):
+    """
+    Map a cached engine.run() result to the level dict schema used elsewhere.
+    Used together with run_vbp_engine() to avoid double-running the engine.
+    """
+    if not vbp_result or 'levels' not in vbp_result:
+        return []
+    levels_df = vbp_result['levels']
+    if levels_df is None or len(levels_df) == 0:
+        return []
+    
+    levels = []
+    for _, row in levels_df.iterrows():
+        try:
+            price = float(row.get('price', 0))
+            if price <= 0:
+                continue
+            score = float(row.get('score', 0))
+            strength = max(0.0, min(0.95, score))
+            sources_raw = row.get('sources', '') or ''
+            tags = [t.strip() for t in sources_raw.split('|') if t.strip()] if isinstance(sources_raw, str) else []
+            algo_count = int(row.get('algo_count', 1))
+            vbp_pct = float(row.get('vbp_norm', 0))
+            row_type = str(row.get('type', 'level'))
+            is_anchor = row_type in ('POC', 'VAH', 'VAL')
+            type_label = f'VbP-{row_type}' if is_anchor else 'VbP'
+            if is_anchor:
+                strength = max(strength, 0.80)
+            levels.append({
+                'price': price, 'type': type_label, 'strength': float(strength),
+                'category': 'VbP', 'breakoutProb': float(1.0 - strength),
+                'reversionProb': float(strength), 'tags': tags,
+                'algo_count': algo_count, 'vbp_volume_pct': vbp_pct,
+                'is_anchor': bool(is_anchor),
+            })
+        except Exception:
+            continue
+    return sorted(levels, key=lambda x: x['strength'], reverse=True)[:12]
+
+
+def enrich_levels_with_vbp(levels, vbp_result, boost_near_poc=0.10, boost_in_va=0.05):
+    """
+    Enrich an existing list of level dicts (from ANY algorithm — HDBSCAN, OPTICS,
+    KDE, Wyckoff, Neural Network, etc.) with VbP context derived from engine.run().
+    
+    For each level, adds:
+        - 'vbp_volume_at_price': float (raw VbP volume at this price, interpolated)
+        - 'vbp_volume_pct': float in [0,1] (normalized vs max VbP node)
+        - 'near_poc': bool (within 0.5 ATR of POC)
+        - 'in_value_area': bool (between VAL and VAH)
+        - 'distance_to_poc_atr': float
+    
+    And boosts 'strength':
+        - +boost_near_poc if near POC
+        - +boost_in_va if in value area
+        - capped at 0.95
+    
+    Returns the SAME list with enriched dicts (mutates in place, also returns).
+    """
+    if not levels or not vbp_result or not vbp_result.get('engine_ok'):
+        return levels
+    
+    vbp = vbp_result.get('vbp')
+    poc = vbp_result.get('poc')
+    vah = vbp_result.get('vah')
+    val = vbp_result.get('val')
+    atr = vbp_result.get('atr', 0)
+    
+    if vbp is None or len(vbp) == 0 or poc is None or atr <= 0:
+        return levels
+    
+    try:
+        vbp_max = float(vbp.max()) if vbp.max() > 0 else 1.0
+        vbp_prices = vbp.index.values.astype(float)
+        vbp_volumes = vbp.values.astype(float)
+    except Exception:
+        return levels
+    
+    for lvl in levels:
+        try:
+            p = float(lvl.get('price', 0))
+            if p <= 0:
+                continue
+            
+            # Find closest VbP node by price
+            idx = int(np.abs(vbp_prices - p).argmin())
+            vol_at_price = float(vbp_volumes[idx])
+            vol_pct = vol_at_price / vbp_max
+            
+            # Distance to POC in ATR units
+            dist_poc_atr = abs(p - poc) / atr
+            near_poc = dist_poc_atr < 0.5
+            in_va = (val is not None and vah is not None and val <= p <= vah)
+            
+            # Don't overwrite if VbP already set these (VbP-native levels)
+            if 'vbp_volume_at_price' not in lvl:
+                lvl['vbp_volume_at_price'] = vol_at_price
+            if 'vbp_volume_pct' not in lvl or lvl.get('category') != 'VbP':
+                lvl['vbp_volume_pct'] = vol_pct
+            lvl['near_poc'] = bool(near_poc)
+            lvl['in_value_area'] = bool(in_va)
+            lvl['distance_to_poc_atr'] = float(dist_poc_atr)
+            
+            # Strength boost (skip for native VbP levels — already scored with VbP)
+            if lvl.get('category') != 'VbP':
+                bonus = 0.0
+                if near_poc:
+                    bonus += boost_near_poc
+                if in_va:
+                    bonus += boost_in_va
+                if bonus > 0:
+                    new_strength = float(min(0.95, float(lvl.get('strength', 0)) + bonus))
+                    lvl['strength'] = new_strength
+                    lvl['breakoutProb'] = float(1.0 - new_strength)
+                    lvl['reversionProb'] = float(new_strength)
+        except Exception:
+            continue
+    
+    return levels
+
+
 def time_weighted_hdbscan(highs, lows, closes, timestamps, half_life_days=30):
     """
     Weight recent price action more heavily
@@ -5589,13 +5755,21 @@ def get_data():
             print(f"Multi-scale HDBSCAN failed: {e}")
             multiscale_hdbscan_levels_result = []
         
-        # NEW: VbP (Volume-by-Price) level detection — uses LevelEngine from vbp_levels.py
-        # Close-weighted VbP distribution + KDE/HDBSCAN/OPTICS/Wyckoff/homology + POC/VAH/VAL anchors
+        # ─── VbP shared data layer ──────────────────────────────────────────
+        # Run engine.run() ONCE; feed POC/VAH/VAL/atr/vbp series to ALL level algos.
+        # Native VbP-detected levels come from the engine; other algos get enriched
+        # with vbp_volume_pct, near_poc, in_value_area, and a strength boost.
         try:
-            vbp_levels_result = calculate_vbp_levels(hist, timeframe=timeframe, current_price=current_price)
-            print(f"VbP: Generated {len(vbp_levels_result) if vbp_levels_result else 0} levels")
+            vbp_result = run_vbp_engine(hist, timeframe=timeframe, current_price=current_price)
+            if vbp_result and vbp_result.get('engine_ok'):
+                vbp_levels_result = calculate_vbp_levels_from_result(vbp_result)
+                print(f"VbP engine: POC={vbp_result['poc']:.2f} VAH={vbp_result['vah']:.2f} VAL={vbp_result['val']:.2f} ATR={vbp_result['atr']:.2f} | {len(vbp_levels_result)} native levels")
+            else:
+                vbp_result = None
+                vbp_levels_result = []
         except Exception as e:
-            print(f"VbP failed: {e}")
+            print(f"VbP engine failed: {e}")
+            vbp_result = None
             vbp_levels_result = []
         
         # NEW: Time-weighted HDBSCAN (if timestamps available)
@@ -5677,6 +5851,24 @@ def get_data():
         fib_levels = fib_levels or []
         gap_levels = gap_levels or []
         vbp_levels_result = vbp_levels_result or []
+        
+        # ─── VbP enrichment: feed POC/VAH/VAL/vbp series to every level algo ───
+        # Each level gets vbp_volume_pct, near_poc, in_value_area + strength boost
+        if vbp_result is not None and vbp_result.get('engine_ok'):
+            enrich_levels_with_vbp(hdbscan_levels, vbp_result)
+            enrich_levels_with_vbp(enhanced_optics_levels_result, vbp_result)
+            enrich_levels_with_vbp(kde_levels_result, vbp_result)
+            enrich_levels_with_vbp(multiscale_hdbscan_levels_result, vbp_result)
+            enrich_levels_with_vbp(time_weighted_levels_result, vbp_result)
+            enrich_levels_with_vbp(wyckoff_levels_result, vbp_result)
+            enrich_levels_with_vbp(persistent_homology_levels_result, vbp_result)
+            enrich_levels_with_vbp(neural_network_levels_result, vbp_result)
+            enrich_levels_with_vbp(isolation_forest_levels, vbp_result)
+            enrich_levels_with_vbp(peak_valley_levels, vbp_result)
+            enrich_levels_with_vbp(pivot_levels, vbp_result)
+            enrich_levels_with_vbp(gap_levels, vbp_result)
+            enrich_levels_with_vbp(vbp_levels_result, vbp_result)  # adds near_poc/in_va flags only
+            print(f"✓ VbP enrichment applied to all level algorithms (POC={vbp_result['poc']:.2f})")
         
         # ML LEVELS: Primary discovery algorithms only (including new methods)
         all_ml_levels = (hdbscan_levels + enhanced_optics_levels_result + kde_levels_result + 
@@ -12094,15 +12286,28 @@ def get_lstm_forecast():
         neural_network_levels = detect_levels_with_neural_network(hist, lookback=100, threshold=0.5)
         print(f"✓ Neural Network levels detected: {len(neural_network_levels)} levels")
         
-        # VbP (Volume-by-Price) levels — close-weighted distribution + multi-algo confluence + POC/VAH/VAL anchors
+        # VbP (Volume-by-Price) — run engine ONCE, share result across all algos
         try:
-            vbp_levels_result = calculate_vbp_levels(hist, timeframe=timeframe, current_price=current_price)
-            print(f"✓ VbP levels detected: {len(vbp_levels_result)} levels")
+            vbp_result_2 = run_vbp_engine(hist, timeframe=timeframe, current_price=current_price)
+            if vbp_result_2 and vbp_result_2.get('engine_ok'):
+                vbp_levels_result = calculate_vbp_levels_from_result(vbp_result_2)
+                # Enrich every algorithm's levels with VbP context (near_poc, vbp_volume_pct, etc)
+                enrich_levels_with_vbp(hdbscan_levels, vbp_result_2)
+                enrich_levels_with_vbp(optics_levels, vbp_result_2)
+                enrich_levels_with_vbp(interaction_levels, vbp_result_2)
+                enrich_levels_with_vbp(multiscale_levels, vbp_result_2)
+                enrich_levels_with_vbp(neural_network_levels, vbp_result_2)
+                enrich_levels_with_vbp(vbp_levels_result, vbp_result_2)
+                print(f"✓ VbP engine + enrichment: POC={vbp_result_2['poc']:.2f} VAH={vbp_result_2['vah']:.2f} VAL={vbp_result_2['val']:.2f} | {len(vbp_levels_result)} VbP levels")
+            else:
+                vbp_result_2 = None
+                vbp_levels_result = []
         except Exception as _vbp_err:
+            vbp_result_2 = None
             vbp_levels_result = []
             print(f"⚠ VbP failed: {_vbp_err}")
         
-        # ML confluence (includes neural network levels)
+        # ML confluence (includes neural network levels AND VbP levels)
         all_ml_levels = hdbscan_levels + optics_levels + interaction_levels + neural_network_levels + vbp_levels_result
         ml_confluence_levels = get_ml_confluence_levels(all_ml_levels)
         
@@ -12432,6 +12637,12 @@ def get_lstm_forecast():
                 'neural_network': len(neural_network_levels),
                 'vbp': len(vbp_levels_result)
             },
+            'vbp_anchors': ({
+                'poc': float(vbp_result_2['poc']) if vbp_result_2 and vbp_result_2.get('poc') is not None else None,
+                'vah': float(vbp_result_2['vah']) if vbp_result_2 and vbp_result_2.get('vah') is not None else None,
+                'val': float(vbp_result_2['val']) if vbp_result_2 and vbp_result_2.get('val') is not None else None,
+                'atr': float(vbp_result_2['atr']) if vbp_result_2 and vbp_result_2.get('atr') is not None else None,
+            } if vbp_result_2 else None),
             'all_levels': sanitize_for_json(sorted(all_levels, key=lambda x: abs(x.get('price', 0) - current_price))[:50]),
             'microstructure_state': sanitize_for_json(microstructure_state) if microstructure_state else None
         }

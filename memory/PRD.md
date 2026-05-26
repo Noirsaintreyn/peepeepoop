@@ -26,6 +26,30 @@
 
 ## What's Been Implemented
 
+### 2026-01-26 — VbP as Shared Data Layer (deep wiring)
+**Backend (`/app/backend.py`):**
+- Refactored to call `engine.run()` ONCE per forecast (cached as `vbp_result`/`vbp_result_2`)
+- New helpers in backend:
+  - `run_vbp_engine(hist, timeframe, current_price)` — single canonical entry point
+  - `calculate_vbp_levels_from_result(vbp_result)` — maps engine.run() levels to schema
+  - `enrich_levels_with_vbp(levels, vbp_result)` — adds `vbp_volume_at_price`, `vbp_volume_pct`, `near_poc`, `in_value_area`, `distance_to_poc_atr` to every level dict; boosts strength +0.10 if near POC (within 0.5 ATR) and +0.05 if in value area (VAL ≤ price ≤ VAH); capped at 0.95
+- Enrichment applied to ALL level algorithms in both codepaths:
+  - hdbscan_levels, enhanced_optics, kde, multiscale, time_weighted, wyckoff, persistent_homology, neural_network, isolation_forest, peak_valley, pivot, gap, AND the VbP-native levels themselves (for near_poc/in_va flags)
+- Response now includes `vbp_anchors: {poc, vah, val, atr}` payload
+
+**Frontend (`/app/peepeepoop_repo/lstm-forecast-example.html`):**
+- New "VbP Anchors (POC / Value Area)" section showing POC/VAH/VAL/ATR in the existing gold/dark style
+- Per-level VbP badges: `[POC]` (gold border) for near-POC levels, `[VA]` (faded gold) for in-value-area levels
+- Screenshot-confirmed: HDBSCAN/OPTICS levels now display VbP context badges and boosted strengths
+
+**Tests:**
+- `test_vbp_shared_layer.py` (NEW) — verifies enrichment boosts strength, sets flags correctly, all assertions pass
+- `test_vbp_integration.py` — original integration test still passes
+- `test_csv_persistence.py` — CSV feature unaffected
+
+**Not done (explicitly flagged to user):**
+- CNN/BiLSTM 2nd input channel for VbP histogram → requires retraining `level_detector.pth`, which is a separate session
+
 ### 2026-01-26 — VbP Level Detection Integration
 **New file: `/app/vbp_levels.py`** (908 lines)
 - LevelEngine v2 with close-weighted VbP distribution

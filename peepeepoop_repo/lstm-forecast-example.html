@@ -1720,7 +1720,8 @@
                     levels: levels,
                     allLevels: forecastData.all_levels || [],
                     currentPrice: answer.target_price / (1 + answer.target_pct_move / 100),
-                    modelUsed: forecastData.model_used
+                    modelUsed: forecastData.model_used,
+                    vbpAnchors: forecastData.vbp_anchors || null
                 };
             }
 
@@ -1848,6 +1849,30 @@
                             </div>
                         </div>
 
+                        ${formattedData.vbpAnchors && formattedData.vbpAnchors.poc !== null ? `
+                            <div class="lstm-forecast-bounds">
+                                <div class="bounds-header">VbP Anchors (POC / Value Area)</div>
+                                <div class="bounds-grid">
+                                    <div class="bound-item">
+                                        <div class="bound-label">POC (Point of Control)</div>
+                                        <div class="bound-value" style="color:#c9a227">$${formattedData.vbpAnchors.poc.toFixed(2)}</div>
+                                    </div>
+                                    <div class="bound-item">
+                                        <div class="bound-label">ATR</div>
+                                        <div class="bound-value">${formattedData.vbpAnchors.atr ? '$' + formattedData.vbpAnchors.atr.toFixed(2) : '—'}</div>
+                                    </div>
+                                    <div class="bound-item">
+                                        <div class="bound-label">VAH (Value Area High)</div>
+                                        <div class="bound-value green">${formattedData.vbpAnchors.vah !== null ? '$' + formattedData.vbpAnchors.vah.toFixed(2) : '—'}</div>
+                                    </div>
+                                    <div class="bound-item">
+                                        <div class="bound-label">VAL (Value Area Low)</div>
+                                        <div class="bound-value red">${formattedData.vbpAnchors.val !== null ? '$' + formattedData.vbpAnchors.val.toFixed(2) : '—'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
                         <div class="lstm-forecast-levels">
                             <div class="levels-header">Levels Detected</div>
                             <div class="levels-grid">
@@ -1868,7 +1893,12 @@
                                     const dist = cp ? (((l.price - cp) / cp) * 100).toFixed(2) : '0.00';
                                     const color = type === 'resistance' ? '#6fcf97' : '#eb5757';
                                     const str = l.strength ? (typeof l.strength === 'number' && l.strength <= 1 ? (l.strength * 100).toFixed(0) + '%' : Math.round(l.strength) + '%') : '—';
-                                    return `<div class="level-row"><span class="level-row-price" style="color:${color}">$${l.price.toFixed(2)}</span><span class="level-row-type">${l.type || l.category || ''}</span><span class="level-row-str">${str}</span><span class="level-row-dist" style="color:${parseFloat(dist) >= 0 ? '#6fcf97' : '#eb5757'}">${parseFloat(dist) >= 0 ? '+' : ''}${dist}%</span></div>`;
+                                    // VbP enrichment badges
+                                    const badges = [];
+                                    if (l.near_poc) badges.push('<span style="color:#c9a227;font-size:0.6rem;padding:1px 5px;border:1px solid rgba(201,162,39,0.4);margin-left:4px;letter-spacing:0.05em;">POC</span>');
+                                    else if (l.in_value_area) badges.push('<span style="color:rgba(201,162,39,0.6);font-size:0.6rem;padding:1px 5px;border:1px solid rgba(201,162,39,0.2);margin-left:4px;letter-spacing:0.05em;">VA</span>');
+                                    const badgeHtml = badges.join('');
+                                    return `<div class="level-row"><span class="level-row-price" style="color:${color}">$${l.price.toFixed(2)}</span><span class="level-row-type">${l.type || l.category || ''}${badgeHtml}</span><span class="level-row-str">${str}</span><span class="level-row-dist" style="color:${parseFloat(dist) >= 0 ? '#6fcf97' : '#eb5757'}">${parseFloat(dist) >= 0 ? '+' : ''}${dist}%</span></div>`;
                                 };
                                 let html = '';
                                 if (resistance.length > 0) {
