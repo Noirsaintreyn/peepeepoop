@@ -942,6 +942,7 @@
             <li><a href="#" data-tab="analysis">Analysis</a></li>
             <li><a href="#" data-tab="levels">Levels</a></li>
             <li><a href="#" data-tab="models">Models</a></li>
+            <li><a href="#" data-tab="data">Data</a></li>
         </ul>
     </nav>
 
@@ -1050,6 +1051,49 @@
 
                 <div id="backtestContainer"></div>
             </div>
+
+            <!-- MotiveWave Data Upload Panel -->
+            <div class="forecast-panel" id="dataPanel" style="display: none;">
+                <div class="panel-header">
+                    <div class="panel-title">MotiveWave Data</div>
+                    <div class="panel-badge" id="mwBadge">No Data</div>
+                </div>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="mw-ticker">Ticker</label>
+                        <input type="text" id="mw-ticker" value="NQ=F" placeholder="NQ=F, ES=F, SPY">
+                    </div>
+                    <div class="control-group">
+                        <label for="mw-timeframe">Timeframe</label>
+                        <select id="mw-timeframe">
+                            <option value="1m">1 Min</option>
+                            <option value="5m">5 Min</option>
+                            <option value="15m">15 Min</option>
+                            <option value="1h" selected>1 Hour</option>
+                            <option value="4h">4 Hours</option>
+                            <option value="1d">Daily</option>
+                        </select>
+                    </div>
+                    <div class="control-group full-width">
+                        <div id="mwDropZone" style="border:2px dashed rgba(255,255,255,0.2);border-radius:8px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;" ondragover="event.preventDefault();this.style.borderColor='rgba(255,255,255,0.6)';this.style.background='rgba(255,255,255,0.05)';" ondragleave="this.style.borderColor='rgba(255,255,255,0.2)';this.style.background='';" ondrop="handleMwDrop(event);" onclick="document.getElementById('mwFileInput').click();">
+                            <div style="font-size:1.8rem;margin-bottom:6px;">📂</div>
+                            <div style="color:rgba(255,255,255,0.55);font-size:0.85rem;">Drop MotiveWave CSV here or click to browse</div>
+                            <div id="mwFileName" style="margin-top:8px;color:rgba(255,255,255,0.85);font-size:0.8rem;font-weight:500;"></div>
+                        </div>
+                        <input type="file" id="mwFileInput" accept=".csv,.txt" style="display:none" onchange="mwFileSelected(this.files[0])">
+                    </div>
+                    <div class="control-group full-width">
+                        <button class="btn" id="mwUploadBtn" onclick="uploadMwCsv()">Upload CSV</button>
+                    </div>
+                    <div id="mwUploadResult" style="margin-top:10px;font-size:0.85rem;min-height:20px;color:rgba(255,255,255,0.7);"></div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Active Datasets</div>
+                    <div id="mwStatusList" style="font-size:0.85rem;"></div>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -2354,8 +2398,9 @@
         });
         // ===== Tab Switching =====
         const navLinks = document.querySelectorAll('.nav-links a[data-tab]');
-        const forecastPanel = document.querySelector('.forecast-panel:not(.backtest-panel)');
+        const forecastPanel = document.querySelector('.forecast-panel:not(.backtest-panel):not(#dataPanel)');
         const backtestPanel = document.getElementById('backtestPanel');
+        const dataPanel    = document.getElementById('dataPanel');
 
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -2363,15 +2408,126 @@
                 navLinks.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
                 const tab = link.dataset.tab;
+                forecastPanel.style.display = 'none';
+                backtestPanel.style.display = 'none';
+                dataPanel.style.display     = 'none';
                 if (tab === 'backtest') {
-                    forecastPanel.style.display = 'none';
                     backtestPanel.style.display = 'block';
+                } else if (tab === 'data') {
+                    dataPanel.style.display = 'block';
+                    refreshMwStatus();
                 } else {
                     forecastPanel.style.display = 'block';
-                    backtestPanel.style.display = 'none';
                 }
             });
         });
+
+        // ===== MotiveWave CSV Upload =====
+        let mwFile = null;
+
+        function mwFileSelected(file) {
+            if (!file) return;
+            mwFile = file;
+            document.getElementById('mwFileName').textContent = file.name;
+        }
+
+        function handleMwDrop(e) {
+            e.preventDefault();
+            document.getElementById('mwDropZone').style.borderColor = 'rgba(255,255,255,0.2)';
+            document.getElementById('mwDropZone').style.background = '';
+            const file = e.dataTransfer.files[0];
+            if (file) mwFileSelected(file);
+        }
+
+        async function uploadMwCsv() {
+            const ticker    = document.getElementById('mw-ticker').value.trim().toUpperCase();
+            const timeframe = document.getElementById('mw-timeframe').value;
+            const resultEl  = document.getElementById('mwUploadResult');
+            const btn       = document.getElementById('mwUploadBtn');
+
+            if (!mwFile) { resultEl.textContent = '⚠ Select a CSV file first.'; return; }
+            if (!ticker) { resultEl.textContent = '⚠ Enter a ticker symbol.'; return; }
+
+            const formData = new FormData();
+            formData.append('file', mwFile);
+            formData.append('ticker', ticker);
+            formData.append('timeframe', timeframe);
+
+            btn.disabled = true;
+            resultEl.textContent = 'Uploading…';
+            try {
+                const resp = await fetchWithRetry(`${API_BASE}/api/motivewave/upload`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData,
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    resultEl.style.color = '#22c55e';
+                    resultEl.textContent = `✓ ${data.bars || ''} bars loaded for ${ticker} ${timeframe}`;
+                    document.getElementById('mwBadge').textContent = 'Active';
+                    document.getElementById('mwBadge').style.background = 'rgba(34,197,94,0.2)';
+                    document.getElementById('mwBadge').style.color = '#22c55e';
+                    mwFile = null;
+                    document.getElementById('mwFileName').textContent = '';
+                    document.getElementById('mwFileInput').value = '';
+                    refreshMwStatus();
+                } else {
+                    resultEl.style.color = '#ef4444';
+                    resultEl.textContent = '✗ ' + (data.error || 'Upload failed');
+                }
+            } catch (err) {
+                resultEl.style.color = '#ef4444';
+                resultEl.textContent = '✗ Connection error — is the server up?';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteMwData(ticker, timeframe) {
+            try {
+                await fetchWithRetry(`${API_BASE}/api/motivewave/delete`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticker, timeframe }),
+                });
+                refreshMwStatus();
+            } catch (err) {}
+        }
+
+        async function refreshMwStatus() {
+            const listEl = document.getElementById('mwStatusList');
+            const badge  = document.getElementById('mwBadge');
+            try {
+                const resp = await fetchWithRetry(`${API_BASE}/api/motivewave/status`, {
+                    credentials: 'include'
+                });
+                const data = await resp.json();
+                const datasets = data.datasets || [];
+                if (datasets.length === 0) {
+                    listEl.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:0.82rem;padding:8px 0;">No data uploaded yet. Drop a MotiveWave CSV above.</div>';
+                    badge.textContent = 'No Data';
+                    badge.style.background = '';
+                    badge.style.color = '';
+                } else {
+                    badge.textContent = datasets.length + ' Active';
+                    badge.style.background = 'rgba(34,197,94,0.2)';
+                    badge.style.color = '#22c55e';
+                    listEl.innerHTML = datasets.map(d => `
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:6px;margin-bottom:6px;">
+                            <div>
+                                <span style="color:rgba(255,255,255,0.9);font-weight:500;">${d.ticker}</span>
+                                <span style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-left:8px;">${d.timeframe} · ${d.bars} bars</span>
+                            </div>
+                            <button onclick="deleteMwData('${d.ticker}','${d.timeframe}')" style="background:rgba(239,68,68,0.15);border:none;color:#ef4444;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:0.78rem;">Remove</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                listEl.innerHTML = '<div style="color:rgba(239,68,68,0.6);font-size:0.82rem;">Could not reach server.</div>';
+            }
+        }
 
         // ===== Backtest Engine =====
         const BT_COLORS = {
