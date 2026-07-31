@@ -247,6 +247,7 @@ class LSTMForecast {
                         <div class="level-type">Multiscale: ${formattedData.levels.multiscale}</div>
                         <div class="level-type">Neural Net: ${formattedData.levels.neural_network}</div>
                         <div class="level-type">GMM: ${formattedData.levels.gmm ?? 0}</div>
+                        <div class="level-type">TDA: ${formattedData.levels.tda ?? 0}</div>
                         <div class="level-type">KDE: ${formattedData.levels.kde ?? 0}</div>
                         <div class="level-type">MeanShift: ${formattedData.levels.meanshift ?? 0}</div>
                     </div>
