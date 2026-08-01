@@ -1592,7 +1592,15 @@
             const structuralLevels = zone.structural_levels || [];
             const knownLows = zoneLowByBar.slice(viewStart).filter(v => v !== null);
             const knownHighs = zoneHighByBar.slice(viewStart).filter(v => v !== null);
-            const allVals = prices.slice(viewStart).concat(knownLows, knownHighs, structuralLevels.map(l => l.price));
+            // Zoomed out: scale to fit every structural level so none of
+            // the adaptive S/R history clips off-screen. Zoomed in: scale
+            // to just the visible price action + zone band instead - a
+            // level from a completely different point in the 150-bar
+            // window (possibly a very different price regime) shouldn't
+            // flatten the price axis for the very detail you zoomed in to
+            // see; it's fine for it to sit outside the zoomed range.
+            const allVals = prices.slice(viewStart).concat(knownLows, knownHighs,
+                zoneZoomedIn ? [] : structuralLevels.map(l => l.price));
             const minP = Math.min(...allVals);
             const maxP = Math.max(...allVals);
             const pad = (maxP - minP) * 0.08 || 1;
