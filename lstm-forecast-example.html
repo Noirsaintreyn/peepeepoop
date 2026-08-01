@@ -1451,6 +1451,8 @@
         let currentTicker = 'SPY';
         let lastZoneData = null;
         let levelHitboxes = [];
+        let zoneZoomedIn = false;
+        const ZONE_ZOOM_BARS = 50;
 
         function renderOuZoneSection(zone) {
             const cz = zone.current_zone;
@@ -1461,6 +1463,7 @@
                         <div class="zone-chart-title">Zone Heatmap</div>
                         <div style="display:flex;align-items:center;gap:8px;">
                             <div class="zone-chart-badge">${zone.ticker}</div>
+                            <button id="zoneZoomBtn" class="zone-tf-select" type="button" title="Toggle zoomed-in/out view">${zoneZoomedIn ? 'Zoom Out' : 'Zoom In'}</button>
                             <select id="zoneTimeframeSelect" class="zone-tf-select">
                                 <option value="1h" ${zone.timeframe === '1h' ? 'selected' : ''}>1H</option>
                                 <option value="4h" ${zone.timeframe === '4h' ? 'selected' : ''}>4H</option>
@@ -1559,6 +1562,12 @@
             const n = prices.length;
             if (n < 2) return;
 
+            // zoomed-in mode shows only the most recent bars stretched
+            // across the full canvas width, for inspecting how price
+            // actually reacted near the zone edge in more detail
+            const viewStart = zoneZoomedIn ? Math.max(0, n - ZONE_ZOOM_BARS) : 0;
+            const viewN = n - viewStart;
+
             // linearly interpolate between OU re-fit scan points, so the
             // band reads as one smooth ribbon rather than stepping every
             // 5 bars when the fit refreshes
@@ -1581,24 +1590,24 @@
             }
 
             const structuralLevels = zone.structural_levels || [];
-            const knownLows = zoneLowByBar.filter(v => v !== null);
-            const knownHighs = zoneHighByBar.filter(v => v !== null);
-            const allVals = prices.concat(knownLows, knownHighs, structuralLevels.map(l => l.price));
+            const knownLows = zoneLowByBar.slice(viewStart).filter(v => v !== null);
+            const knownHighs = zoneHighByBar.slice(viewStart).filter(v => v !== null);
+            const allVals = prices.slice(viewStart).concat(knownLows, knownHighs, structuralLevels.map(l => l.price));
             const minP = Math.min(...allVals);
             const maxP = Math.max(...allVals);
             const pad = (maxP - minP) * 0.08 || 1;
             const yMin = minP - pad, yMax = maxP + pad;
 
-            const xStep = width / (n - 1);
+            const xStep = width / Math.max(1, viewN - 1);
             const yOf = (p) => height - ((p - yMin) / (yMax - yMin)) * height;
 
             // heatmap: shade each column, opacity peaking at the zone
             // center and fading to the edges - a real Gaussian-shaped
             // density read (matches the OU stationary distribution the
             // zone is derived from), not a decorative flat band
-            for (let i = 0; i < n; i++) {
+            for (let i = viewStart; i < n; i++) {
                 if (zoneLowByBar[i] === null) continue;
-                const x = i * xStep;
+                const x = (i - viewStart) * xStep;
                 const lowY = yOf(zoneLowByBar[i]);
                 const highY = yOf(zoneHighByBar[i]);
                 const top = Math.min(lowY, highY);
@@ -1617,10 +1626,10 @@
             ctx.beginPath();
             ctx.strokeStyle = '#e8e6e3';
             ctx.lineWidth = 1.5;
-            for (let i = 0; i < n; i++) {
-                const x = i * xStep;
+            for (let i = viewStart; i < n; i++) {
+                const x = (i - viewStart) * xStep;
                 const y = yOf(prices[i]);
-                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                if (i === viewStart) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
 
@@ -1635,7 +1644,7 @@
             levelHitboxes = [];
             structuralLevels.forEach(lvl => {
                 const y = yOf(lvl.price);
-                const xStart = Math.max(0, lvl.formed_at_idx * xStep);
+                const xStart = Math.max(0, (lvl.formed_at_idx - viewStart) * xStep);
                 ctx.beginPath();
                 ctx.strokeStyle = `rgba(255, 255, 255, ${(0.3 + 0.5 * lvl.strength).toFixed(2)})`;
                 ctx.lineWidth = 1;
@@ -1705,6 +1714,14 @@
                     if (tfSel) {
                         tfSel.addEventListener('change', (e) => {
                             fetchAndRenderOuZoneChart(ticker, e.target.value);
+                        });
+                    }
+                    const zoomBtn = document.getElementById('zoneZoomBtn');
+                    if (zoomBtn) {
+                        zoomBtn.addEventListener('click', () => {
+                            zoneZoomedIn = !zoneZoomedIn;
+                            zoomBtn.textContent = zoneZoomedIn ? 'Zoom Out' : 'Zoom In';
+                            drawZoneHeatmap(lastZoneData);
                         });
                     }
                 } else {
