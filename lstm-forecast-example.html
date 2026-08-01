@@ -913,6 +913,7 @@
 }
 
 .lstm-forecast-bounds,
+.lstm-forecast-levels,
 .lstm-forecast-attention {
     margin: 24px 0;
     padding: 24px;
@@ -922,6 +923,7 @@
 }
 
 .bounds-header,
+.levels-header,
 .attention-header {
     font-size: 0.65rem;
     font-weight: 500;
@@ -929,6 +931,74 @@
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.3);
     margin-bottom: 16px;
+}
+
+.levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+    background: rgba(201, 162, 39, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.level-type {
+    padding: 12px 16px;
+    background: #0a0e1a;
+    font-size: 0.8rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+}
+
+.level-list-section {
+    margin-top: 16px;
+}
+
+.level-list-header {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.12);
+}
+
+.level-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.06);
+    font-size: 0.8rem;
+}
+
+.level-row-price {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.level-row-type {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.75rem;
+    font-weight: 300;
+}
+
+.level-row-str {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    text-align: right;
+}
+
+.level-row-dist {
+    font-size: 0.75rem;
+    font-weight: 400;
+    text-align: right;
+    min-width: 55px;
 }
 
 .bounds-grid {
@@ -1097,7 +1167,9 @@
                         lodID: bounds.lod_intraday
                     },
                     currentPrice: answer.target_price / (1 + answer.target_pct_move / 100),
-                    modelUsed: forecastData.model_used
+                    modelUsed: forecastData.model_used,
+                    levels: forecastData.levels_detected,
+                    allLevels: forecastData.all_levels || []
                 };
             }
 
@@ -1224,6 +1296,44 @@
                                 </div>
                             </div>
                         </div>
+
+                        ${formattedData.levels ? `
+                        <div class="lstm-forecast-levels">
+                            <div class="levels-header">Levels Detected</div>
+                            <div class="levels-grid">
+                                <div class="level-type">HDBSCAN: ${formattedData.levels.hdbscan}</div>
+                                <div class="level-type">OPTICS: ${formattedData.levels.optics}</div>
+                                <div class="level-type">Interaction: ${formattedData.levels.interaction}</div>
+                                <div class="level-type">ML-Confluence: ${formattedData.levels.ml_confluence}</div>
+                                <div class="level-type">Multiscale: ${formattedData.levels.multiscale}</div>
+                                <div class="level-type">Neural Net: ${formattedData.levels.neural_network}</div>
+                                <div class="level-type">GMM: ${formattedData.levels.gmm ?? 0}</div>
+                                <div class="level-type">TDA: ${formattedData.levels.tda ?? 0}</div>
+                                <div class="level-type">KDE: ${formattedData.levels.kde ?? 0}</div>
+                                <div class="level-type">MeanShift: ${formattedData.levels.meanshift ?? 0}</div>
+                            </div>
+                            ${(() => {
+                                const allLevels = formattedData.allLevels || [];
+                                const cp = formattedData.currentPrice || 0;
+                                const resistance = allLevels.filter(l => (l.price || 0) > cp);
+                                const support = allLevels.filter(l => (l.price || 0) <= cp);
+                                const renderRow = (l, type) => {
+                                    const dist = cp ? (((l.price - cp) / cp) * 100).toFixed(2) : '0.00';
+                                    const color = type === 'resistance' ? '#6fcf97' : '#eb5757';
+                                    const str = l.strength ? (typeof l.strength === 'number' && l.strength <= 1 ? (l.strength * 100).toFixed(0) + '%' : Math.round(l.strength) + '%') : '—';
+                                    return `<div class="level-row"><span class="level-row-price" style="color:${color}">$${l.price.toFixed(2)}</span><span class="level-row-type">${l.type || l.category || ''}</span><span class="level-row-str">${str}</span><span class="level-row-dist" style="color:${parseFloat(dist) >= 0 ? '#6fcf97' : '#eb5757'}">${parseFloat(dist) >= 0 ? '+' : ''}${dist}%</span></div>`;
+                                };
+                                let html = '';
+                                if (resistance.length > 0) {
+                                    html += `<div class="level-list-section"><div class="level-list-header">Resistance (${resistance.length})</div>${resistance.slice(0, 15).map(l => renderRow(l, 'resistance')).join('')}</div>`;
+                                }
+                                if (support.length > 0) {
+                                    html += `<div class="level-list-section"><div class="level-list-header">Support (${support.length})</div>${support.slice(0, 15).map(l => renderRow(l, 'support')).join('')}</div>`;
+                                }
+                                return html;
+                            })()}
+                        </div>
+                        ` : ''}
 
                         ${formattedData.attention && formattedData.attention.weights ? `
                             <div class="lstm-forecast-attention">
