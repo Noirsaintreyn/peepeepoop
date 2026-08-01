@@ -1517,6 +1517,23 @@
                         </div>
                     </div>
                     <div class="zone-backtest-note">12yr walk-forward backtest, NQ/ES 1H/4H &middot; z=5.7-14.6 vs random</div>
+                    ${bt.target_availability != null ? `
+                    <div class="zone-backtest-row" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="zone-backtest-stat">
+                            <div class="zone-backtest-label">Target Availability</div>
+                            <div class="zone-backtest-value">${(bt.target_availability * 100).toFixed(0)}%</div>
+                        </div>
+                        <div class="zone-backtest-stat">
+                            <div class="zone-backtest-label">Target Reach Rate</div>
+                            <div class="zone-backtest-value">${(bt.target_reach_rate * 100).toFixed(0)}%</div>
+                        </div>
+                        <div class="zone-backtest-stat">
+                            <div class="zone-backtest-label">Reach Before -1 ATR</div>
+                            <div class="zone-backtest-value">${(bt.target_clean_reach_rate * 100).toFixed(0)}%</div>
+                        </div>
+                    </div>
+                    <div class="zone-backtest-note">of rejected zones with a real target &middot; "Reach Before -1 ATR" = would've survived a 1-ATR stop to see it</div>
+                    ` : ''}
                     ` : ''}
                 </div>
             `;
