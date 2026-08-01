@@ -237,14 +237,7 @@ class LSTMForecast {
                     </div>
                 </div>
 
-                <div class="zones-and-levels-row">
-                    <div class="options-zones-panel" id="optionsZonesPanel">
-                        <div class="zones-panel-header"><span>Options Vol Surface & Zones</span><span id="zonesInstrumentLabel"></span></div>
-                        <div class="vol-surface-container" id="volSurfaceContainer"></div>
-                        <div class="zones-regime-note" id="zonesRegimeNote"></div>
-                        <div id="zonesList"></div>
-                    </div>
-                    <div class="lstm-forecast-levels">
+                <div class="lstm-forecast-levels">
                     <div class="levels-header">Levels Detected</div>
                     <div class="levels-grid">
                         <div class="level-type">HDBSCAN: ${formattedData.levels.hdbscan}</div>
@@ -278,7 +271,6 @@ class LSTMForecast {
                         }
                         return html;
                     })()}
-                    </div>
                 </div>
 
                 ${formattedData.attention && formattedData.attention.weights ? `
@@ -291,104 +283,6 @@ class LSTMForecast {
                 ` : ''}
             </div>
         `;
-    }
-
-    /**
-     * Fetch and render the options-derived vol surface + zones panel into
-     * the #optionsZonesPanel DOM created by renderForecast() above. Only
-     * meaningful for NQ/ES (options_zones.py only supports those, priced
-     * via their liquid ETF proxies QQQ/SPY) - any other ticker just shows
-     * an empty-state message rather than guessing a proxy that doesn't
-     * exist. Requires window.Plotly to be loaded by the consuming page
-     * (https://cdn.plot.ly/plotly-2.35.2.min.js) for the 3D surface.
-     * @param {string} ticker
-     */
-    async fetchAndRenderOptionsZones(ticker) {
-        const panel = document.getElementById('optionsZonesPanel');
-        if (!panel) return;
-        const instrument = this._tickerToInstrument(ticker);
-        const label = document.getElementById('zonesInstrumentLabel');
-        const surfaceEl = document.getElementById('volSurfaceContainer');
-        const noteEl = document.getElementById('zonesRegimeNote');
-        const listEl = document.getElementById('zonesList');
-
-        if (!instrument) {
-            if (label) label.textContent = '';
-            if (surfaceEl) surfaceEl.innerHTML = '';
-            if (noteEl) noteEl.textContent = '';
-            if (listEl) listEl.innerHTML = '<div class="zones-panel-empty">Only available for NQ/ES tickers (priced via QQQ/SPY options).</div>';
-            return;
-        }
-
-        if (label) label.textContent = instrument;
-        if (listEl) listEl.innerHTML = '<div class="zones-panel-empty">Loading live options data...</div>';
-
-        try {
-            const headers = {};
-            if (this.authToken) headers['Authorization'] = `Bearer ${this.authToken}`;
-            const [surfaceResp, zonesResp] = await Promise.all([
-                fetch(`${this.apiBaseUrl}/api/vol-surface?instrument=${instrument}`, { credentials: 'include', headers }),
-                fetch(`${this.apiBaseUrl}/api/options-zones?instrument=${instrument}`, { credentials: 'include', headers }),
-            ]);
-            const surface = surfaceResp.ok ? await surfaceResp.json() : null;
-            const zones = zonesResp.ok ? await zonesResp.json() : null;
-
-            if (surface && surface.success && surfaceEl && window.Plotly) {
-                const ink = 'rgba(255,255,255,0.4)';
-                const grid = 'rgba(201,162,39,0.08)';
-                const trace = {
-                    type: 'surface', x: surface.strikes, y: surface.dtes, z: surface.z,
-                    colorscale: [[0, '#2a78d6'], [0.5, '#c9a227'], [1, '#eb5757']],
-                    showscale: false,
-                    contours: { z: { show: true, usecolormap: true, project: { z: true } } },
-                };
-                const layout = {
-                    autosize: true, height: 280, margin: { l: 0, r: 0, t: 4, b: 0 },
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    scene: {
-                        xaxis: { title: { text: 'Strike', font: { color: ink, size: 10 } }, tickfont: { color: ink, size: 9 }, gridcolor: grid, backgroundcolor: 'rgba(0,0,0,0)' },
-                        yaxis: { title: { text: 'DTE', font: { color: ink, size: 10 } }, tickfont: { color: ink, size: 9 }, gridcolor: grid, backgroundcolor: 'rgba(0,0,0,0)' },
-                        zaxis: { title: { text: 'IV %', font: { color: ink, size: 10 } }, tickfont: { color: ink, size: 9 }, gridcolor: grid, backgroundcolor: 'rgba(0,0,0,0)' },
-                        camera: { eye: { x: 1.6, y: -1.6, z: 0.9 } },
-                    },
-                };
-                window.Plotly.react(surfaceEl, [trace], layout, { displayModeBar: false, responsive: true });
-            } else if (surfaceEl) {
-                surfaceEl.innerHTML = '<div class="zones-panel-empty">Vol surface unavailable.</div>';
-            }
-
-            if (zones && zones.success) {
-                if (noteEl) {
-                    noteEl.textContent = `${zones.proxy_symbol} spot ${zones.spot}  ·  ${zones.regime_note || ''}  ·  IV move ${zones.iv_expected_move_pct}% vs GJR-GARCH ${zones.price_expected_move_pct ?? '—'}%`;
-                }
-                if (listEl) {
-                    const sorted = [...zones.zones].sort((a, b) => b.confluence - a.confluence);
-                    listEl.innerHTML = sorted.map(z => `
-                        <div class="zone-row">
-                            <div>
-                                <div class="zone-row-source">${z.source.replace(/_/g, ' ')}</div>
-                                <div class="zone-row-note">${z.note}</div>
-                            </div>
-                            <div>
-                                <div class="zone-row-range">${z.low.toLocaleString()} - ${z.high.toLocaleString()}</div>
-                                <div class="zone-row-confluence">confluence ${z.confluence}/6</div>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } else if (listEl) {
-                listEl.innerHTML = `<div class="zones-panel-empty">${(zones && zones.error) || 'Zones unavailable.'}</div>`;
-            }
-        } catch (err) {
-            if (listEl) listEl.innerHTML = '<div class="zones-panel-empty">Could not reach server for options data.</div>';
-        }
-    }
-
-    _tickerToInstrument(ticker) {
-        const t = (ticker || '').toUpperCase();
-        if (t.startsWith('NQ')) return 'NQ';
-        if (t.startsWith('ES')) return 'ES';
-        return null;
     }
 }
 
@@ -663,89 +557,6 @@ const LSTM_FORECAST_STYLES = `
     background: rgba(255, 255, 255, 0.04);
     border-radius: 2px;
     overflow: hidden;
-}
-
-.zones-and-levels-row {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
-
-.zones-and-levels-row .lstm-forecast-levels {
-    flex: 1 1 320px;
-    margin: 0;
-}
-
-.options-zones-panel {
-    flex: 1 1 340px;
-    margin: 24px 0;
-    padding: 24px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 2px;
-}
-
-.zones-panel-header {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-}
-
-.vol-surface-container {
-    width: 100%;
-    height: 280px;
-}
-
-.zones-regime-note {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.4);
-    margin: 12px 0;
-}
-
-.zone-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.zone-row-source {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.zone-row-note {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.35);
-    margin-top: 2px;
-}
-
-.zone-row-range {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-align: right;
-    white-space: nowrap;
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.zone-row-confluence {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.35);
-    text-align: right;
-    margin-top: 2px;
-}
-
-.zones-panel-empty {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.3);
 }
 
 .level-type {
