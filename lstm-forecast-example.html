@@ -79,7 +79,11 @@
         .hero-bg {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse at 70% 50%, rgba(10, 14, 26, 0.5) 0%, transparent 70%);
+            background-image:
+                radial-gradient(ellipse at 70% 50%, rgba(10, 14, 26, 0.65) 0%, rgba(10, 14, 26, 0.92) 60%, #0a0e1a 85%),
+                url('https://upload.wikimedia.org/wikipedia/commons/3/32/SAILING_SHIP_ON_A_CALM_SEA_BY_MOONLIGHT.jpg');
+            background-size: cover, cover;
+            background-position: center, 70% 40%;
             pointer-events: none;
         }
 
@@ -445,6 +449,116 @@
         }
 
 
+        /* Cover Page */
+        .cover-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1100;
+            background: #050810;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .cover-overlay.hidden { display: none; }
+        .cover-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/3/32/SAILING_SHIP_ON_A_CALM_SEA_BY_MOONLIGHT.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: saturate(1.15) contrast(1.05) brightness(0.75);
+            transform: scale(1.04);
+        }
+        .cover-tint {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 50% 40%, rgba(10, 14, 26, 0.15) 0%, rgba(6, 10, 20, 0.55) 65%, rgba(5, 8, 16, 0.9) 100%),
+                linear-gradient(180deg, rgba(10, 20, 40, 0.35) 0%, rgba(5, 8, 16, 0.2) 40%, rgba(5, 8, 16, 0.85) 100%);
+        }
+        .cover-vignette {
+            position: absolute;
+            inset: 0;
+            box-shadow: inset 0 0 180px 60px rgba(0, 0, 0, 0.75);
+            pointer-events: none;
+        }
+        .cover-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 32px;
+        }
+        .cover-eyebrow {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            color: rgba(201, 162, 39, 0.65);
+            margin-bottom: 24px;
+        }
+        .cover-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 4.5rem;
+            font-weight: 300;
+            background: linear-gradient(180deg, #f3dd8a 0%, #c9a227 45%, #8a6a15 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 40px rgba(201, 162, 39, 0.25);
+            margin-bottom: 12px;
+            letter-spacing: 0.01em;
+        }
+        .cover-tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 48px;
+        }
+        .cover-enter {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 40px;
+            background: rgba(201, 162, 39, 0.06);
+            border: 1px solid rgba(201, 162, 39, 0.4);
+            color: #f0dca0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 1px;
+            transition: all 0.4s ease;
+        }
+        .cover-enter:hover {
+            background: rgba(201, 162, 39, 0.14);
+            border-color: rgba(201, 162, 39, 0.7);
+            letter-spacing: 0.3em;
+        }
+        .cover-credit {
+            position: absolute;
+            bottom: 20px;
+            right: 24px;
+            z-index: 2;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.25);
+            font-family: 'Inter', sans-serif;
+        }
+        .cover-overlay.leaving .cover-content,
+        .cover-overlay.leaving .cover-credit {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .cover-overlay.leaving .cover-bg {
+            transition: opacity 0.6s ease;
+            opacity: 0;
+        }
+
         /* Login Page */
         .login-overlay {
             position: fixed;
@@ -543,6 +657,20 @@
     </style>
 </head>
 <body>
+    <!-- Cover -->
+    <div class="cover-overlay" id="coverOverlay">
+        <div class="cover-bg"></div>
+        <div class="cover-tint"></div>
+        <div class="cover-vignette"></div>
+        <div class="cover-content">
+            <div class="cover-eyebrow">Fair Value &middot; Structure &middot; Reversion</div>
+            <h1 class="cover-title">L'argent parle.</h1>
+            <p class="cover-tagline">Nous traduisons.</p>
+            <button class="cover-enter" id="coverEnterBtn">Enter</button>
+        </div>
+        <div class="cover-credit">I. Aivazovsky, Sailing Ship on a Calm Sea by Moonlight, 1897</div>
+    </div>
+
     <!-- Login Overlay -->
     <div class="login-overlay" id="loginOverlay">
         <div class="login-box">
@@ -1161,6 +1289,16 @@
             }
         }
 
+        // ===== Cover =====
+        const coverOverlay = document.getElementById('coverOverlay');
+        const coverEnterBtn = document.getElementById('coverEnterBtn');
+        function enterFromCover() {
+            coverOverlay.classList.add('leaving');
+            setTimeout(() => coverOverlay.classList.add('hidden'), 550);
+        }
+        coverOverlay.addEventListener('click', enterFromCover);
+        coverEnterBtn.addEventListener('click', (e) => { e.stopPropagation(); enterFromCover(); });
+
         // ===== Login =====
         const API_BASE = 'https://fartpie.onrender.com';
         const loginOverlay = document.getElementById('loginOverlay');
@@ -1235,6 +1373,22 @@
                             <div class="zone-level-value" style="color:#eb5757;">${cz ? '$' + cz.low.toFixed(2) : '—'}</div>
                         </div>
                     </div>
+                    ${zone.target && zone.target.stretched ? `
+                    <div class="zone-levels-row" style="border-top:1px solid rgba(201,162,39,0.1);padding-top:12px;margin-top:0;">
+                        <div class="zone-level-stat">
+                            <div class="zone-level-label">Stretched (${zone.target.side})</div>
+                            <div class="zone-level-value">$${zone.target.edge.toFixed(2)}</div>
+                        </div>
+                        <div class="zone-level-stat">
+                            <div class="zone-level-label">${zone.target.target_price ? 'Target (touched ' + zone.target.target_touch_count + 'x)' : 'Target'}</div>
+                            <div class="zone-level-value" style="color:#1D9E75;">${zone.target.target_price ? '$' + zone.target.target_price.toFixed(2) : 'none right now'}</div>
+                        </div>
+                        <div class="zone-level-stat">
+                            <div class="zone-level-label">Fair Value</div>
+                            <div class="zone-level-value" style="color:#378ADD;">$${zone.target.consensus_vwap.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    ` : ''}
                     ${bt ? `
                     <div class="zone-backtest-row">
                         <div class="zone-backtest-stat">
@@ -1301,9 +1455,10 @@
                 }
             }
 
+            const structuralLevels = zone.structural_levels || [];
             const knownLows = zoneLowByBar.filter(v => v !== null);
             const knownHighs = zoneHighByBar.filter(v => v !== null);
-            const allVals = prices.concat(knownLows, knownHighs);
+            const allVals = prices.concat(knownLows, knownHighs, structuralLevels.map(l => l.price));
             const minP = Math.min(...allVals);
             const maxP = Math.max(...allVals);
             const pad = (maxP - minP) * 0.08 || 1;
@@ -1343,6 +1498,26 @@
                 if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
+
+            // structural levels: real consolidation zones (ML-filter-scored
+            // KDE density peaks from a rolling scan across history, not a
+            // single current-moment snapshot) - each drawn from where it
+            // was actually formed onward (clipped to the visible window),
+            // so OLDER zones stay visible alongside newer ones instead of
+            // being replaced - an adaptive S/R history, not one snapshot.
+            // Overlapping lines near the same price = a level confirmed
+            // repeatedly over time, which is real signal, not clutter.
+            structuralLevels.forEach(lvl => {
+                const y = yOf(lvl.price);
+                const xStart = Math.max(0, lvl.formed_at_idx * xStep);
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${(0.3 + 0.5 * lvl.strength).toFixed(2)})`;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([]);
+                ctx.moveTo(xStart, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            });
         }
 
         window.addEventListener('resize', () => { if (lastZoneData) drawZoneHeatmap(lastZoneData); });
