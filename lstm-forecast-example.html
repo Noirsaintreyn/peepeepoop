@@ -388,6 +388,36 @@
             overflow: hidden;
         }
 
+        .zone-level-tooltip {
+            position: absolute;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -100%);
+            transition: opacity 0.1s ease;
+            background: rgba(10, 14, 26, 0.95);
+            border: 1px solid rgba(201, 162, 39, 0.35);
+            border-radius: 3px;
+            padding: 6px 10px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            color: #e8e6e3;
+        }
+
+        .zone-level-tooltip.visible {
+            opacity: 1;
+        }
+
+        .zone-level-tooltip .zlt-price {
+            font-weight: 500;
+            color: #f0dca0;
+            margin-right: 8px;
+        }
+
+        .zone-level-tooltip .zlt-stat {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
         .zone-levels-row {
             display: flex;
             justify-content: space-between;
@@ -1415,6 +1445,7 @@
         // perpetual loading spinner) =====
         let currentTicker = 'SPY';
         let lastZoneData = null;
+        let levelHitboxes = [];
 
         function renderOuZoneSection(zone) {
             const cz = zone.current_zone;
@@ -1433,6 +1464,7 @@
                     </div>
                     <div class="zone-chart-canvas-wrap">
                         <canvas id="zoneCanvas"></canvas>
+                        <div class="zone-level-tooltip" id="zoneLevelTooltip"></div>
                     </div>
                     <div class="zone-levels-row">
                         <div class="zone-level-stat">
@@ -1578,6 +1610,7 @@
             // being replaced - an adaptive S/R history, not one snapshot.
             // Overlapping lines near the same price = a level confirmed
             // repeatedly over time, which is real signal, not clutter.
+            levelHitboxes = [];
             structuralLevels.forEach(lvl => {
                 const y = yOf(lvl.price);
                 const xStart = Math.max(0, lvl.formed_at_idx * xStep);
@@ -1588,7 +1621,43 @@
                 ctx.moveTo(xStart, y);
                 ctx.lineTo(width, y);
                 ctx.stroke();
+                levelHitboxes.push({ y, xStart, xEnd: width, price: lvl.price, strength: lvl.strength, touches: lvl.touches || 0 });
             });
+
+            // hover: find the nearest level line under the cursor (within a
+            // few px vertically) and show its score/touch-count stats -
+            // the same numbers driving the ML filter, not decorative
+            const tooltip = document.getElementById('zoneLevelTooltip');
+            if (tooltip && !canvas._hoverBound) {
+                canvas._hoverBound = true;
+                canvas.addEventListener('mousemove', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const mx = e.clientX - rect.left;
+                    const my = e.clientY - rect.top;
+                    let closest = null, closestDist = 5;
+                    for (const hb of levelHitboxes) {
+                        if (mx < hb.xStart || mx > hb.xEnd) continue;
+                        const dist = Math.abs(my - hb.y);
+                        if (dist < closestDist) { closestDist = dist; closest = hb; }
+                    }
+                    const tt = document.getElementById('zoneLevelTooltip');
+                    if (!tt) return;
+                    if (closest) {
+                        tt.innerHTML = `<span class="zlt-price">$${closest.price.toFixed(2)}</span><span class="zlt-stat">${(closest.strength * 100).toFixed(0)}% score &middot; touched ${closest.touches}x</span>`;
+                        const flipBelow = closest.y < 28;
+                        tt.style.left = Math.min(Math.max(mx, 60), width - 60) + 'px';
+                        tt.style.top = (flipBelow ? closest.y + 8 : closest.y - 8) + 'px';
+                        tt.style.transform = flipBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)';
+                        tt.classList.add('visible');
+                    } else {
+                        tt.classList.remove('visible');
+                    }
+                });
+                canvas.addEventListener('mouseleave', () => {
+                    const tt = document.getElementById('zoneLevelTooltip');
+                    if (tt) tt.classList.remove('visible');
+                });
+            }
         }
 
         window.addEventListener('resize', () => { if (lastZoneData) drawZoneHeatmap(lastZoneData); });
