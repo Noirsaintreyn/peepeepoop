@@ -1599,8 +1599,10 @@
             // window (possibly a very different price regime) shouldn't
             // flatten the price axis for the very detail you zoomed in to
             // see; it's fine for it to sit outside the zoomed range.
+            const fairValue = zone.target && zone.target.consensus_vwap != null ? zone.target.consensus_vwap : null;
             const allVals = prices.slice(viewStart).concat(knownLows, knownHighs,
-                zoneZoomedIn ? [] : structuralLevels.map(l => l.price));
+                zoneZoomedIn ? [] : structuralLevels.map(l => l.price),
+                fairValue != null ? [fairValue] : []);
             const minP = Math.min(...allVals);
             const maxP = Math.max(...allVals);
             const pad = (maxP - minP) * 0.08 || 1;
@@ -1640,6 +1642,20 @@
                 if (i === viewStart) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
+
+            // fair value (consensus VWAP the zone is built around) - a
+            // solid line, not dashed, so it reads clearly instead of
+            // looking like a broken streak against the heatmap band
+            if (fairValue != null) {
+                const y = yOf(fairValue);
+                ctx.beginPath();
+                ctx.strokeStyle = '#378ADD';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
 
             // structural levels: real consolidation zones (ML-filter-scored
             // KDE density peaks from a rolling scan across history, not a
