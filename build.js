@@ -6,17 +6,10 @@ if (!fs.existsSync(distDir)) {
   fs.mkdirSync(distDir);
 }
 
-const frontendFiles = [
-  'lstm-forecast-example.html',
-  'lstm-forecast-frontend.js',
-];
-
-for (const file of frontendFiles) {
-  fs.copyFileSync(
-    path.join(__dirname, file),
-    path.join(distDir, file)
-  );
-}
+fs.copyFileSync(
+  path.join(__dirname, 'lstm-forecast-example.html'),
+  path.join(distDir, 'lstm-forecast-example.html')
+);
 
 // Copy lstm-forecast-example.html as index.html so root URL works
 fs.copyFileSync(
