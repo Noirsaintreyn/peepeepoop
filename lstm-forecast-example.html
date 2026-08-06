@@ -407,6 +407,41 @@
             color: rgba(255, 255, 255, 0.25);
             letter-spacing: 0.03em;
         }
+        .macro-read-range {
+            background: rgba(201, 162, 39, 0.03);
+            border: 1px solid rgba(201, 162, 39, 0.1);
+            border-radius: 2px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+        .macro-read-range-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+        .macro-read-range-label {
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .macro-read-range-value {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #f0dca0;
+        }
+        .macro-read-range-detail {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 4px;
+        }
+        .macro-read-range-note {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
 
         /* Zone Heatmap Section (left side, replaces NHP) */
         .zone-chart-section {
@@ -1816,6 +1851,19 @@
                             <div class="macro-read-badge ${badgeClass}">${badgeText}</div>
                         </div>
                         <div class="macro-read-narrative">${data.narrative || ''}</div>
+                        ${data.expected_range ? `
+                        <div class="macro-read-range">
+                            <div class="macro-read-range-row">
+                                <span class="macro-read-range-label">Expected Range Today</span>
+                                <span class="macro-read-range-value">$${data.expected_range.expected_low.toFixed(2)} &ndash; $${data.expected_range.expected_high.toFixed(2)}</span>
+                            </div>
+                            <div class="macro-read-range-detail">
+                                From open $${data.expected_range.today_open.toFixed(2)} (±${data.expected_range.expected_range_pct.toFixed(2)}%)
+                                &middot; current $${data.expected_range.current_price.toFixed(2)} is ${data.expected_range.position_description}
+                            </div>
+                            ${data.expected_range.note ? `<div class="macro-read-range-note">${data.expected_range.note}</div>` : ''}
+                        </div>
+                        ` : ''}
                         <div class="macro-read-footer">
                             <span>Cross-asset macro context &middot; one input among several, not a standalone signal</span>
                             <span>Updated ${now}</span>
