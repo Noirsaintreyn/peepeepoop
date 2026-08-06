@@ -339,6 +339,75 @@
             }
         }
 
+        /* Macro Read - cross-asset regime read, shown above the hero */
+        .macro-read-wrap {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 108px 48px 0;
+        }
+        @media (max-width: 900px) {
+            .macro-read-wrap { padding: 96px 24px 0; }
+        }
+        .macro-read-card {
+            background: rgba(201, 162, 39, 0.04);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            border-radius: 2px;
+            padding: 20px 24px;
+        }
+        .macro-read-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .macro-read-title {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.35);
+        }
+        .macro-read-lean {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #f0dca0;
+        }
+        .macro-read-badge {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 3px 9px;
+            border-radius: 10px;
+        }
+        .macro-read-badge.validated {
+            background: rgba(111, 207, 151, 0.15);
+            color: #6fcf97;
+            border: 1px solid rgba(111, 207, 151, 0.3);
+        }
+        .macro-read-badge.unvalidated {
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .macro-read-narrative {
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.65);
+            margin-bottom: 10px;
+        }
+        .macro-read-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: 0.03em;
+        }
+
         /* Zone Heatmap Section (left side, replaces NHP) */
         .zone-chart-section {
             padding: 8px 0 0;
@@ -698,6 +767,8 @@
             <li><a href="#" data-tab="data">Data</a></li>
         </ul>
     </nav>
+
+    <div id="macroReadSection"></div>
 
     <!-- Hero -->
     <section class="hero">
@@ -1717,6 +1788,61 @@
 
         window.addEventListener('resize', () => { if (lastZoneData) drawZoneHeatmap(lastZoneData); });
 
+        function renderMacroReadSection(data) {
+            if (!data.has_prediction) {
+                return `
+                    <div class="macro-read-wrap">
+                        <div class="macro-read-card">
+                            <div class="macro-read-header">
+                                <div class="macro-read-title">Macro Read</div>
+                                <div class="macro-read-badge unvalidated">No model</div>
+                            </div>
+                            <div class="macro-read-narrative">${data.note || 'No backtested macro model for this ticker.'}</div>
+                        </div>
+                    </div>`;
+            }
+            const pct = (data.trending_probability * 100).toFixed(0);
+            const badgeClass = data.validated ? 'validated' : 'unvalidated';
+            const badgeText = data.validated ? `Validated (z=${data.backtest_z})` : 'Not validated';
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="macro-read-wrap">
+                    <div class="macro-read-card">
+                        <div class="macro-read-header">
+                            <div>
+                                <div class="macro-read-title">Macro Read &middot; ${data.label || data.instrument}</div>
+                                <div class="macro-read-lean">${pct}% ${data.lean}</div>
+                            </div>
+                            <div class="macro-read-badge ${badgeClass}">${badgeText}</div>
+                        </div>
+                        <div class="macro-read-narrative">${data.narrative || ''}</div>
+                        <div class="macro-read-footer">
+                            <span>Cross-asset macro context &middot; one input among several, not a standalone signal</span>
+                            <span>Updated ${now}</span>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        async function fetchAndRenderMacroRead(ticker) {
+            const section = document.getElementById('macroReadSection');
+            if (!section) return;
+            try {
+                const url = new URL(`${API_BASE}/api/macro-regime`);
+                url.searchParams.set('ticker', ticker);
+                const resp = await fetchWithRetry(url.toString(), { credentials: 'include' });
+                const data = resp ? await resp.json() : { success: false };
+                if (data.success) {
+                    section.innerHTML = renderMacroReadSection(data);
+                } else {
+                    section.innerHTML = '';
+                }
+            } catch (err) {
+                console.warn('Macro read fetch failed:', err);
+                section.innerHTML = '';
+            }
+        }
+
         async function fetchAndRenderOuZoneChart(ticker, timeframe) {
             const heroLeft = document.getElementById('heroLeft');
             heroLeft.innerHTML = `
@@ -1792,8 +1918,9 @@
                 const formatted = forecast.formatForecast(data);
                 forecast.renderForecast(formatted, container);
 
-                // Fetch the zone chart independently, same ticker/timeframe
+                // Fetch the zone chart and macro read independently, same ticker
                 fetchAndRenderOuZoneChart(ticker, timeframe);
+                fetchAndRenderMacroRead(ticker);
             } catch (error) {
                 container.innerHTML = `
                     <div class="lstm-forecast-error">
