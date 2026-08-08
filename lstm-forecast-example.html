@@ -587,6 +587,48 @@
             text-align: center;
         }
 
+        .algo-backtest-table {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(201, 162, 39, 0.1);
+        }
+
+        .algo-backtest-header, .algo-backtest-row {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr 1fr 1fr;
+            gap: 6px;
+            padding: 3px 0;
+        }
+
+        .algo-backtest-header {
+            font-size: 0.5rem;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+        }
+
+        .algo-backtest-header span, .algo-backtest-row span {
+            text-align: right;
+        }
+
+        .algo-backtest-header span:first-child, .algo-backtest-row span:first-child {
+            text-align: left;
+        }
+
+        .algo-backtest-row {
+            font-size: 0.68rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .algo-backtest-row .algo-name {
+            color: #ffffff;
+        }
+
+        .algo-backtest-row .algo-lift {
+            color: #c9a227;
+            font-weight: 500;
+        }
+
 
         /* Cover Page */
         .cover-overlay {
@@ -1563,6 +1605,7 @@
         function renderOuZoneSection(zone) {
             const cz = zone.current_zone;
             const bt = zone.backtest_summary;
+            const algoBt = zone.level_algo_backtest;
             return `
                 <div class="zone-chart-section">
                     <div class="zone-chart-header">
@@ -1643,6 +1686,23 @@
                     </div>
                     <div class="zone-backtest-note">of rejected zones with a real target &middot; "Reach Before -1 ATR" = would've survived a 1-ATR stop to see it</div>
                     ` : ''}
+                    ` : ''}
+                    ${algoBt ? `
+                    <div class="algo-backtest-table">
+                        <div class="algo-backtest-header">
+                            <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>Lift</span>
+                        </div>
+                        ${Object.entries(algoBt.algorithms)
+                            .sort((a, b) => b[1].lift - a[1].lift)
+                            .map(([name, s]) => `
+                        <div class="algo-backtest-row">
+                            <span class="algo-name">${name}</span>
+                            <span>${(s.unconditional * 100).toFixed(0)}%</span>
+                            <span>${(s.filtered * 100).toFixed(0)}%</span>
+                            <span class="algo-lift">+${(s.lift * 100).toFixed(1)}pp</span>
+                        </div>`).join('')}
+                    </div>
+                    <div class="zone-backtest-note">${algoBt.note}</div>
                     ` : ''}
                 </div>
             `;
