@@ -2097,9 +2097,23 @@
                 return `<span onclick="toggleEquityLine('${name}')" style="cursor:pointer;color:${on ? color : 'rgba(255,255,255,0.25)'};user-select:none;">&#9679; ${name}</span>`;
             }).join('');
 
+            // When zoomed, recompute stats for just the visible window from
+            // the weekly trade_count/win_count/cum_r arrays - previously
+            // this always showed the full-period numbers even while zoomed,
+            // which didn't match what the chart was actually showing.
             const statLines = visible.map(name => {
-                const s = chartData.lines[name];
-                return `<div>${name}: ${s.n_trades} trades &middot; ${(s.win_rate * 100).toFixed(0)}% win &middot; ${s.total_r >= 0 ? '+' : ''}${s.total_r.toFixed(0)}R</div>`;
+                const full = chartData.lines[name];
+                if (!zoomed) {
+                    return `<div>${name}: ${full.n_trades} trades &middot; ${(full.win_rate * 100).toFixed(0)}% win &middot; ${full.total_r >= 0 ? '+' : ''}${full.total_r.toFixed(0)}R</div>`;
+                }
+                const tradeSlice = full.trade_count.slice(zStart, zEnd + 1);
+                const winSlice = full.win_count.slice(zStart, zEnd + 1);
+                const nTrades = tradeSlice.reduce((a, b) => a + b, 0);
+                const nWins = winSlice.reduce((a, b) => a + b, 0);
+                const winRate = nTrades > 0 ? nWins / nTrades : 0;
+                const rBefore = zStart > 0 ? full.cum_r[zStart - 1] : 0;
+                const totalR = full.cum_r[zEnd] - rBefore;
+                return `<div>${name}: ${nTrades} trades &middot; ${(winRate * 100).toFixed(0)}% win &middot; ${totalR >= 0 ? '+' : ''}${totalR.toFixed(0)}R <span style="color:rgba(255,255,255,0.3);">(this range)</span></div>`;
             }).join('');
 
             return `
