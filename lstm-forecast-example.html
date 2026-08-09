@@ -2069,10 +2069,18 @@
             const plotW = W - padL - padR, plotH = H - padT - padB;
             const n = dates.length;
 
-            const priceMin = Math.min(...price), priceMax = Math.max(...price);
+            // Axis bounds are anchored to the FULL-period data, not the
+            // zoomed slice - otherwise every zoom re-stretches the y-axis
+            // to fill the chart with whatever's visible, making a smaller
+            // sub-period's peak look just as tall as the full period's
+            // (misleading: the line's height stops meaning anything
+            // relative to the actual R/price scale once it rescales).
+            // Keeping the scale fixed means a weaker sub-range correctly
+            // renders lower/flatter, not artificially stretched to fill.
             const visible = lineNames.filter(name => equityCurveVisibleLines.has(name));
-            const allVisibleR = visible.length ? visible.flatMap(name => lines[name]) : [0];
-            const rMin = Math.min(0, ...allVisibleR), rMax = Math.max(0, ...allVisibleR);
+            const fullAllVisibleR = visible.length ? visible.flatMap(name => chartData.lines[name].cum_r) : [0];
+            const priceMin = Math.min(...chartData.price), priceMax = Math.max(...chartData.price);
+            const rMin = Math.min(0, ...fullAllVisibleR), rMax = Math.max(0, ...fullAllVisibleR);
             const priceRange = (priceMax - priceMin) || 1;
             const rRange = (rMax - rMin) || 1;
 
