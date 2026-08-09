@@ -911,6 +911,7 @@
                         </select>
                     </div>
                 </div>
+                <div id="equityCurveChartContainer" style="padding-top:16px;"></div>
                 <div id="algoBacktestContainer" style="padding-top:12px;"></div>
             </div>
 
@@ -2021,6 +2022,7 @@
                 dataPanel.style.display     = 'none';
                 if (tab === 'data') {
                     dataPanel.style.display = 'block';
+                    fetchAndRenderEquityCurve();
                     fetchAndRenderAlgoBacktest();
                 } else {
                     forecastPanel.style.display = 'block';
@@ -2030,6 +2032,196 @@
 
         // ===== Level-Detection Algorithm Backtest =====
         let algoBacktestData = null;  // fetched once, cached - it's static reference data
+        let equityCurveData = null;   // fetched once, cached - it's static reference data
+
+        const EQUITY_LINE_COLORS = {
+            'All (combined)': '#ffffff',
+            'TDA': '#6fcf97',
+            'OPTICS': '#378ADD',
+            'Multiscale-HDBSCAN': '#b57bee',
+            'HDBSCAN': '#f2994a',
+            'MeanShift': '#e05aa6',
+            'GMM': '#4fd1c5',
+            'KDE': '#d6d94f',
+            'Isolation-Forest': '#eb5757',
+        };
+        let equityCurveVisibleLines = null;  // Set, initialized on first render
+        let equityCurveZoomRange = null;     // {start, end} data indices, or null = full range
+
+        function renderEquityCurveChart(chartData) {
+            if (!chartData || !chartData.dates || chartData.dates.length < 2) {
+                return '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No equity curve data for this combo.</div>';
+            }
+            const lineNames = Object.keys(chartData.lines);
+            if (!equityCurveVisibleLines) equityCurveVisibleLines = new Set(lineNames);
+
+            const fullN = chartData.dates.length;
+            const zoomed = !!equityCurveZoomRange;
+            const zStart = zoomed ? equityCurveZoomRange.start : 0;
+            const zEnd = zoomed ? equityCurveZoomRange.end : fullN - 1;
+
+            const dates = chartData.dates.slice(zStart, zEnd + 1);
+            const price = chartData.price.slice(zStart, zEnd + 1);
+            const lines = {};
+            for (const name of lineNames) lines[name] = chartData.lines[name].cum_r.slice(zStart, zEnd + 1);
+
+            const W = 700, H = 260, padL = 46, padR = 46, padT = 10, padB = 20;
+            const plotW = W - padL - padR, plotH = H - padT - padB;
+            const n = dates.length;
+
+            const priceMin = Math.min(...price), priceMax = Math.max(...price);
+            const visible = lineNames.filter(name => equityCurveVisibleLines.has(name));
+            const allVisibleR = visible.length ? visible.flatMap(name => lines[name]) : [0];
+            const rMin = Math.min(0, ...allVisibleR), rMax = Math.max(0, ...allVisibleR);
+            const priceRange = (priceMax - priceMin) || 1;
+            const rRange = (rMax - rMin) || 1;
+
+            const xAt = (i) => padL + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2);
+            const yPrice = (v) => padT + plotH - ((v - priceMin) / priceRange) * plotH;
+            const yR = (v) => padT + plotH - ((v - rMin) / rRange) * plotH;
+
+            const pricePoints = price.map((v, i) => `${xAt(i).toFixed(1)},${yPrice(v).toFixed(1)}`).join(' ');
+            const zeroY = yR(0).toFixed(1);
+
+            const linesSvg = visible.map(name => {
+                const color = EQUITY_LINE_COLORS[name] || '#aaaaaa';
+                const width = name === 'All (combined)' ? 2.2 : 1.3;
+                const opacity = name === 'All (combined)' ? 1 : 0.85;
+                const pts = lines[name].map((v, i) => `${xAt(i).toFixed(1)},${yR(v).toFixed(1)}`).join(' ');
+                return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="${width}" opacity="${opacity}" />`;
+            }).join('');
+
+            const legend = lineNames.map(name => {
+                const color = EQUITY_LINE_COLORS[name] || '#aaaaaa';
+                const on = equityCurveVisibleLines.has(name);
+                return `<span onclick="toggleEquityLine('${name}')" style="cursor:pointer;color:${on ? color : 'rgba(255,255,255,0.25)'};user-select:none;">&#9679; ${name}</span>`;
+            }).join('');
+
+            const statLines = visible.map(name => {
+                const s = chartData.lines[name];
+                return `<div>${name}: ${s.n_trades} trades &middot; ${(s.win_rate * 100).toFixed(0)}% win &middot; ${s.total_r >= 0 ? '+' : ''}${s.total_r.toFixed(0)}R</div>`;
+            }).join('');
+
+            return `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <span style="font-size:0.6rem;color:rgba(255,255,255,0.3);">Drag on the chart to zoom into a date range</span>
+                    ${zoomed ? `<span onclick="resetEquityCurveZoom()" style="font-size:0.6rem;color:#c9a227;cursor:pointer;">&#8634; Reset zoom</span>` : ''}
+                </div>
+                <svg id="equityCurveSvg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;cursor:crosshair;user-select:none;" data-pad-l="${padL}" data-pad-r="${padR}" data-w="${W}" data-n="${n}" data-zstart="${zStart}">
+                    <line x1="${padL}" y1="${zeroY}" x2="${W - padR}" y2="${zeroY}" stroke="rgba(255,255,255,0.12)" stroke-dasharray="3,3" />
+                    <polyline points="${pricePoints}" fill="none" stroke="#c9a227" stroke-width="1.6" />
+                    ${linesSvg}
+                    <text x="${padL}" y="${padT + 8}" fill="rgba(201,162,39,0.8)" font-size="9">$${priceMax.toFixed(0)}</text>
+                    <text x="${padL}" y="${H - padB}" fill="rgba(201,162,39,0.8)" font-size="9">$${priceMin.toFixed(0)}</text>
+                    <text x="${W - padR}" y="${padT + 8}" fill="rgba(255,255,255,0.6)" font-size="9" text-anchor="end">${rMax.toFixed(0)}R</text>
+                    <text x="${W - padR}" y="${H - padB}" fill="rgba(255,255,255,0.6)" font-size="9" text-anchor="end">${rMin.toFixed(0)}R</text>
+                    <text x="${padL}" y="${H - 4}" fill="rgba(255,255,255,0.35)" font-size="9">${dates[0]}</text>
+                    <text x="${W - padR}" y="${H - 4}" fill="rgba(255,255,255,0.35)" font-size="9" text-anchor="end">${dates[n - 1]}</text>
+                    <rect id="zoomBrush" x="0" y="${padT}" width="0" height="${plotH}" fill="rgba(201,162,39,0.15)" stroke="rgba(201,162,39,0.5)" stroke-width="0.5" visibility="hidden" />
+                </svg>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:0.65rem;">
+                    <span style="color:#c9a227;">&#9679; Price</span>
+                    ${legend}
+                </div>
+                <div style="font-size:0.65rem;color:rgba(255,255,255,0.45);margin-top:8px;line-height:1.5;">
+                    ${statLines}
+                    <div style="margin-top:4px;color:rgba(255,255,255,0.3);">fixed 2R win / -1R loss (1.0/0.5 ATR target/stop) - no slippage or fees. Click a legend item to toggle it.</div>
+                </div>
+            `;
+        }
+
+        function attachEquityCurveZoomHandlers() {
+            const svg = document.getElementById('equityCurveSvg');
+            if (!svg) return;
+            const brush = document.getElementById('zoomBrush');
+            const padL = parseFloat(svg.dataset.padL), padR = parseFloat(svg.dataset.padR);
+            const W = parseFloat(svg.dataset.w), n = parseInt(svg.dataset.n, 10);
+            const zStart = parseInt(svg.dataset.zstart, 10);
+            const plotW = W - padL - padR;
+
+            const toSvgX = (clientX) => {
+                const pt = svg.createSVGPoint();
+                pt.x = clientX; pt.y = 0;
+                const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+                return svgPt.x;
+            };
+            const xToIndex = (x) => {
+                const frac = (x - padL) / plotW;
+                return Math.round(Math.max(0, Math.min(1, frac)) * (n - 1));
+            };
+
+            let dragStartX = null;
+            svg.addEventListener('mousedown', (e) => {
+                dragStartX = toSvgX(e.clientX);
+                brush.setAttribute('x', dragStartX);
+                brush.setAttribute('width', 0);
+                brush.setAttribute('visibility', 'visible');
+            });
+            svg.addEventListener('mousemove', (e) => {
+                if (dragStartX === null) return;
+                const curX = toSvgX(e.clientX);
+                brush.setAttribute('x', Math.min(dragStartX, curX));
+                brush.setAttribute('width', Math.abs(curX - dragStartX));
+            });
+            const endDrag = (e) => {
+                if (dragStartX === null) return;
+                const curX = toSvgX(e.clientX);
+                brush.setAttribute('visibility', 'hidden');
+                const pixelDist = Math.abs(curX - dragStartX);
+                dragStartX = dragStartX === curX ? null : dragStartX;
+                if (pixelDist > 8) {
+                    const i1 = xToIndex(Math.min(dragStartX, curX));
+                    const i2 = xToIndex(Math.max(dragStartX, curX));
+                    if (i2 > i1) {
+                        equityCurveZoomRange = { start: zStart + i1, end: zStart + i2 };
+                        updateEquityCurveDisplay();
+                    }
+                }
+                dragStartX = null;
+            };
+            svg.addEventListener('mouseup', endDrag);
+            svg.addEventListener('mouseleave', endDrag);
+        }
+
+        function resetEquityCurveZoom() {
+            equityCurveZoomRange = null;
+            updateEquityCurveDisplay();
+        }
+
+        function updateEquityCurveDisplay() {
+            const container = document.getElementById('equityCurveChartContainer');
+            if (!equityCurveData) return;
+            const ticker = document.getElementById('algo-ticker').value;
+            const timeframe = document.getElementById('algo-timeframe').value;
+            const key = `${ticker}_${timeframe}`;
+            container.innerHTML = renderEquityCurveChart(equityCurveData.by_instrument[key]);
+            attachEquityCurveZoomHandlers();
+        }
+
+        function renderSelectedEquityCurve() {
+            equityCurveVisibleLines = null;  // reset selection when switching instrument/timeframe
+            equityCurveZoomRange = null;
+            updateEquityCurveDisplay();
+        }
+
+        function toggleEquityLine(name) {
+            if (!equityCurveVisibleLines) return;
+            if (equityCurveVisibleLines.has(name)) equityCurveVisibleLines.delete(name);
+            else equityCurveVisibleLines.add(name);
+            updateEquityCurveDisplay();
+        }
+
+        async function fetchAndRenderEquityCurve() {
+            if (equityCurveData) { renderSelectedEquityCurve(); return; }
+            try {
+                const resp = await fetchWithRetry(`${API_BASE}/api/level-algo-equity-curve`);
+                const data = await resp.json();
+                if (data.success) {
+                    equityCurveData = data;
+                    renderSelectedEquityCurve();
+                }
+            } catch (err) {}
+        }
 
         function renderAlgoBacktestTable(algorithms, note, randomBaseline) {
             const rows = Object.entries(algorithms).sort((a, b) => b[1].lift - a[1].lift);
@@ -2090,8 +2282,8 @@
             }
         }
 
-        document.getElementById('algo-ticker').addEventListener('change', renderSelectedAlgoBacktest);
-        document.getElementById('algo-timeframe').addEventListener('change', renderSelectedAlgoBacktest);
+        document.getElementById('algo-ticker').addEventListener('change', () => { renderSelectedAlgoBacktest(); renderSelectedEquityCurve(); });
+        document.getElementById('algo-timeframe').addEventListener('change', () => { renderSelectedAlgoBacktest(); renderSelectedEquityCurve(); });
 
     </script>
 </body>
