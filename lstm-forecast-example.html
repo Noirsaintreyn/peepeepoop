@@ -595,7 +595,7 @@
 
         .algo-backtest-header, .algo-backtest-row {
             display: grid;
-            grid-template-columns: 1.4fr 0.8fr 0.8fr 0.9fr 0.5fr 0.6fr;
+            grid-template-columns: 1.3fr 0.7fr 0.7fr 0.8fr 0.5fr 0.5fr 0.8fr;
             gap: 6px;
             padding: 3px 0;
         }
@@ -2234,7 +2234,7 @@
                 ` : ''}
                 <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;">
                     <div class="algo-backtest-header">
-                        <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>Lift</span><span>z</span><span>n</span>
+                        <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>Lift</span><span>z</span><span>n</span><span>Realized R:R</span>
                     </div>
                     ${rows.map(([name, s]) => `
                     <div class="algo-backtest-row">
@@ -2244,6 +2244,7 @@
                         <span class="algo-lift">${s.lift >= 0 ? '+' : ''}${(s.lift * 100).toFixed(1)}pp</span>
                         <span>${s.z != null ? s.z.toFixed(1) : '—'}</span>
                         <span>${s.n_holdout}</span>
+                        <span>${s.realized_rr != null ? s.realized_rr.toFixed(2) + ':1' : '—'}</span>
                     </div>`).join('')}
                 </div>
                 <div class="zone-backtest-note" style="margin-top:16px;">${note}</div>
