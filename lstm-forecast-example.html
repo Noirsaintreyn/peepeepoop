@@ -595,7 +595,7 @@
 
         .algo-backtest-header, .algo-backtest-row {
             display: grid;
-            grid-template-columns: 1.6fr 1fr 1fr 1fr;
+            grid-template-columns: 1.4fr 0.8fr 0.8fr 0.9fr 0.5fr 0.6fr;
             gap: 6px;
             padding: 3px 0;
         }
@@ -895,7 +895,23 @@
                     <div class="panel-title">Level-Detection Algorithm Accuracy</div>
                     <div class="panel-badge">Backtested</div>
                 </div>
-                <div id="algoBacktestContainer" style="padding-top:4px;"></div>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="algo-ticker">Ticker</label>
+                        <select id="algo-ticker">
+                            <option value="NQ" selected>NQ</option>
+                            <option value="ES">ES</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="algo-timeframe">Timeframe</label>
+                        <select id="algo-timeframe">
+                            <option value="1h" selected>1 Hour</option>
+                            <option value="4h">4 Hours</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="algoBacktestContainer" style="padding-top:12px;"></div>
             </div>
 
         </div>
@@ -2013,32 +2029,52 @@
         });
 
         // ===== Level-Detection Algorithm Backtest =====
-        let algoBacktestLoaded = false;
+        let algoBacktestData = null;  // fetched once, cached - it's static reference data
 
-        function renderAlgoBacktestTable(instrumentKey, algorithms) {
+        function renderAlgoBacktestTable(algorithms, note, randomBaseline) {
             const rows = Object.entries(algorithms).sort((a, b) => b[1].lift - a[1].lift);
             return `
-                <div style="margin-top:16px;">
-                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">${instrumentKey.replace('_', ' ')}</div>
-                    <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;">
-                        <div class="algo-backtest-header">
-                            <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>Lift</span>
-                        </div>
-                        ${rows.map(([name, s]) => `
-                        <div class="algo-backtest-row">
-                            <span class="algo-name">${name}</span>
-                            <span>${(s.unconditional * 100).toFixed(0)}%</span>
-                            <span>${(s.filtered * 100).toFixed(0)}%</span>
-                            <span class="algo-lift">${s.lift >= 0 ? '+' : ''}${(s.lift * 100).toFixed(1)}pp</span>
-                        </div>`).join('')}
-                    </div>
+                ${randomBaseline != null ? `
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">
+                    Random baseline: <span style="color:rgba(255,255,255,0.7);">${(randomBaseline * 100).toFixed(1)}%</span>
+                    &middot; "Filtered" = top-half by the trained model's predicted P(bounce)
                 </div>
+                ` : ''}
+                <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;">
+                    <div class="algo-backtest-header">
+                        <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>Lift</span><span>z</span><span>n</span>
+                    </div>
+                    ${rows.map(([name, s]) => `
+                    <div class="algo-backtest-row">
+                        <span class="algo-name">${name}</span>
+                        <span>${(s.unconditional * 100).toFixed(0)}%</span>
+                        <span>${(s.filtered * 100).toFixed(0)}%</span>
+                        <span class="algo-lift">${s.lift >= 0 ? '+' : ''}${(s.lift * 100).toFixed(1)}pp</span>
+                        <span>${s.z != null ? s.z.toFixed(1) : '—'}</span>
+                        <span>${s.n_holdout}</span>
+                    </div>`).join('')}
+                </div>
+                <div class="zone-backtest-note" style="margin-top:16px;">${note}</div>
             `;
         }
 
-        async function fetchAndRenderAlgoBacktest() {
-            if (algoBacktestLoaded) return;
+        function renderSelectedAlgoBacktest() {
             const container = document.getElementById('algoBacktestContainer');
+            if (!algoBacktestData) return;
+            const ticker = document.getElementById('algo-ticker').value;
+            const timeframe = document.getElementById('algo-timeframe').value;
+            const key = `${ticker}_${timeframe}`;
+            const algorithms = algoBacktestData.by_instrument[key];
+            if (!algorithms) {
+                container.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No backtest data for ${ticker} ${timeframe}.</div>`;
+                return;
+            }
+            container.innerHTML = renderAlgoBacktestTable(algorithms, algoBacktestData.note, algoBacktestData.random_baseline);
+        }
+
+        async function fetchAndRenderAlgoBacktest() {
+            const container = document.getElementById('algoBacktestContainer');
+            if (algoBacktestData) { renderSelectedAlgoBacktest(); return; }
             container.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Loading…</div>';
             try {
                 const resp = await fetchWithRetry(`${API_BASE}/api/level-algo-backtest`);
@@ -2047,17 +2083,15 @@
                     container.innerHTML = '<div style="color:rgba(239,68,68,0.6);font-size:0.85rem;">Could not load backtest data.</div>';
                     return;
                 }
-                const order = ['NQ_1h', 'NQ_4h', 'ES_1h', 'ES_4h'];
-                container.innerHTML = order
-                    .filter(k => data.by_instrument[k])
-                    .map(k => renderAlgoBacktestTable(k, data.by_instrument[k]))
-                    .join('')
-                    + `<div class="zone-backtest-note" style="margin-top:16px;">${data.note}</div>`;
-                algoBacktestLoaded = true;
+                algoBacktestData = data;
+                renderSelectedAlgoBacktest();
             } catch (err) {
                 container.innerHTML = '<div style="color:rgba(239,68,68,0.6);font-size:0.85rem;">Could not reach server.</div>';
             }
         }
+
+        document.getElementById('algo-ticker').addEventListener('change', renderSelectedAlgoBacktest);
+        document.getElementById('algo-timeframe').addEventListener('change', renderSelectedAlgoBacktest);
 
     </script>
 </body>
