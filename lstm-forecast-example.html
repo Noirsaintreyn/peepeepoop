@@ -2265,7 +2265,7 @@
                         </label>
                     </span>
                     <span>${eq ? eq.n_trades : '—'}</span>
-                    <span>${eq ? (eq.win_rate * 100).toFixed(0) + '%' : '—'}</span>
+                    <span>${eq ? (eq.win_rate * 100).toFixed(1) + '%' : '—'}</span>
                     <span style="color:${eq && eq.total_r >= 0 ? '#6fcf97' : eq ? '#eb5757' : 'inherit'};">${eq ? (eq.total_r >= 0 ? '+' : '') + eq.total_r.toFixed(0) + 'R' : '—'}</span>
                     <span title="${be != null ? `Breakeven win rate at this algorithm's realized ${s.realized_rr.toFixed(2)}:1 R:R` : ''}" style="cursor:${be != null ? 'help' : 'default'};">${be != null ? (be * 100).toFixed(1) + '%' : '—'}</span>
                     <span title="${vsBe != null ? `${(eq.win_rate * 100).toFixed(1)}% win − ${(be * 100).toFixed(1)}% breakeven` : ''}" style="color:${vsBe == null ? 'inherit' : vsBe >= 0 ? '#6fcf97' : '#eb5757'};cursor:${vsBe != null ? 'help' : 'default'};">${vsBe == null ? '—' : (vsBe >= 0 ? '+' : '') + (vsBe * 100).toFixed(1) + 'pp'}</span>
