@@ -595,7 +595,7 @@
 
         .algo-backtest-header, .algo-backtest-row {
             display: grid;
-            grid-template-columns: 1.3fr 0.7fr 0.7fr 0.8fr 0.5fr 0.5fr 0.8fr;
+            grid-template-columns: 1.3fr 0.7fr 0.7fr 0.7fr 0.8fr 0.5fr 0.5fr 0.8fr;
             gap: 6px;
             padding: 3px 0;
         }
@@ -2248,29 +2248,36 @@
             } catch (err) {}
         }
 
+        // Fixed 2:1 target:stop across every algorithm/instrument in this
+        // backtest (bounced = +2R, broken = -1R) - breakeven win rate is
+        // 1/(1+R:R) = 1/3, a constant, not something computed per-row.
+        const BREAKEVEN_WIN_RATE = 1 / 3;
+
         function renderAlgoBacktestTable(algorithms, note, randomBaseline) {
             const rows = Object.entries(algorithms).sort((a, b) => b[1].lift - a[1].lift);
             return `
                 ${randomBaseline != null ? `
                 <div style="font-size:0.68rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">
                     Random baseline: <span style="color:rgba(255,255,255,0.7);">${(randomBaseline * 100).toFixed(1)}%</span>
+                    &middot; Breakeven win rate at the fixed 2:1 target:stop: <span style="color:rgba(255,255,255,0.7);">${(BREAKEVEN_WIN_RATE * 100).toFixed(1)}%</span>
                     &middot; "Filtered" = top-half by the trained model's predicted P(bounce)
                 </div>
                 ` : ''}
                 <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;">
                     <div class="algo-backtest-header">
-                        <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>Lift</span><span>z</span><span>n</span><span>Realized R:R</span>
+                        <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Realized R:R</span>
                     </div>
-                    ${rows.map(([name, s]) => `
+                    ${rows.map(([name, s]) => { const vsBe = s.filtered - BREAKEVEN_WIN_RATE; return `
                     <div class="algo-backtest-row">
                         <span class="algo-name">${name}</span>
                         <span>${(s.unconditional * 100).toFixed(0)}%</span>
                         <span>${(s.filtered * 100).toFixed(0)}%</span>
+                        <span style="color:${vsBe >= 0 ? '#6fcf97' : '#eb5757'};">${vsBe >= 0 ? '+' : ''}${(vsBe * 100).toFixed(1)}pp</span>
                         <span class="algo-lift">${s.lift >= 0 ? '+' : ''}${(s.lift * 100).toFixed(1)}pp</span>
                         <span>${s.z != null ? s.z.toFixed(1) : '—'}</span>
                         <span>${s.n_holdout}</span>
                         <span>${s.realized_rr != null ? s.realized_rr.toFixed(2) + ':1' : '—'}</span>
-                    </div>`).join('')}
+                    </div>`; }).join('')}
                 </div>
                 <div class="zone-backtest-note" style="margin-top:16px;">${note}</div>
             `;
