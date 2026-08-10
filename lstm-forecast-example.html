@@ -2102,30 +2102,6 @@
                 return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="${width}" opacity="${opacity}" />`;
             }).join('');
 
-            const legend = lineNames.map(name => {
-                const color = EQUITY_LINE_COLORS[name] || '#aaaaaa';
-                const on = equityCurveVisibleLines.has(name);
-                return `<span onclick="toggleEquityLine('${name}')" style="cursor:pointer;color:${on ? color : 'rgba(255,255,255,0.25)'};user-select:none;">&#9679; ${name}</span>`;
-            }).join('');
-
-            // When zoomed, recompute stats for just the visible window from
-            // the weekly trade_count/win_count/cum_r arrays - previously
-            // this always showed the full-period numbers even while zoomed,
-            // which didn't match what the chart was actually showing.
-            const statLines = visible.map(name => {
-                const full = chartData.lines[name];
-                if (!zoomed) {
-                    return `<div>${name}: ${full.n_trades} trades &middot; ${(full.win_rate * 100).toFixed(0)}% win &middot; ${full.total_r >= 0 ? '+' : ''}${full.total_r.toFixed(0)}R</div>`;
-                }
-                const tradeSlice = full.trade_count.slice(zStart, zEnd + 1);
-                const winSlice = full.win_count.slice(zStart, zEnd + 1);
-                const nTrades = tradeSlice.reduce((a, b) => a + b, 0);
-                const nWins = winSlice.reduce((a, b) => a + b, 0);
-                const winRate = nTrades > 0 ? nWins / nTrades : 0;
-                const rBefore = zStart > 0 ? full.cum_r[zStart - 1] : 0;
-                const totalR = full.cum_r[zEnd] - rBefore;
-                return `<div>${name}: ${nTrades} trades &middot; ${(winRate * 100).toFixed(0)}% win &middot; ${totalR >= 0 ? '+' : ''}${totalR.toFixed(0)}R <span style="color:rgba(255,255,255,0.3);">(this range)</span></div>`;
-            }).join('');
 
             return `
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -2146,13 +2122,27 @@
                 </svg>
                 <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:0.65rem;">
                     <span style="color:#c9a227;">&#9679; Price</span>
-                    ${legend}
-                </div>
-                <div style="font-size:0.65rem;color:rgba(255,255,255,0.45);margin-top:8px;line-height:1.5;">
-                    ${statLines}
-                    <div style="margin-top:4px;color:rgba(255,255,255,0.3);">fixed 2R win / -1R loss (1.0/0.5 ATR target/stop) - no slippage or fees. Click a legend item to toggle it.</div>
                 </div>
             `;
+        }
+
+        // Per-window trade_count/win_count/cum_r -> {n_trades, win_rate,
+        // total_r} for one line, zoom-aware (same logic the chart's old
+        // inline statLines used) - shared by the combined table below so
+        // zooming updates both the chart AND the table's Trades/Win/Total R
+        // columns together instead of drifting out of sync.
+        function equityLineStats(full, zoomed, zStart, zEnd) {
+            if (!zoomed) {
+                return { n_trades: full.n_trades, win_rate: full.win_rate, total_r: full.total_r, ranged: false };
+            }
+            const tradeSlice = full.trade_count.slice(zStart, zEnd + 1);
+            const winSlice = full.win_count.slice(zStart, zEnd + 1);
+            const nTrades = tradeSlice.reduce((a, b) => a + b, 0);
+            const nWins = winSlice.reduce((a, b) => a + b, 0);
+            const winRate = nTrades > 0 ? nWins / nTrades : 0;
+            const rBefore = zStart > 0 ? full.cum_r[zStart - 1] : 0;
+            const totalR = full.cum_r[zEnd] - rBefore;
+            return { n_trades: nTrades, win_rate: winRate, total_r: totalR, ranged: true };
         }
 
         function attachEquityCurveZoomHandlers() {
@@ -2213,14 +2203,111 @@
             updateEquityCurveDisplay();
         }
 
+        // Breakeven win rate = 1/(1+R:R) - computed per-row from that
+        // algorithm's own REALIZED R:R (avg MFE/MAE, what price actually
+        // did), not the fixed 2:1 label assumption (1.0/0.5 ATR
+        // target/stop) the accuracy/lift numbers are scored against.
+        // Realized R:R runs closer to 1:1 than 2:1 in this backtest, so
+        // the true bar to clear is usually well above the label
+        // scheme's 33.3% - varies per algorithm since realized R:R does.
+        const FALLBACK_BREAKEVEN_WIN_RATE = 1 / 3;  // only used if realized_rr is missing
+        function breakevenWinRate(s) {
+            if (!s) return null;
+            if (s.realized_rr == null || s.realized_rr <= 0) return FALLBACK_BREAKEVEN_WIN_RATE;
+            return 1 / (1 + s.realized_rr);
+        }
+
+        // Single combined table: checkbox+color+name (controls which lines
+        // show on the chart above) plus BOTH the equity-curve's own
+        // trades/win/total-R (zoom-aware) and the accuracy-backtest's
+        // raw/filtered/vs-BE/lift/z/n/realized-R:R - these used to be two
+        // separate displays with overlapping-but-different numbers (the
+        // equity curve's per-line median threshold isn't the same
+        // computation as the backtest table's), which was confusing to
+        // read side by side. "All (combined)" has no accuracy-table row
+        // (it's a pooled line across algorithms, not its own detector) so
+        // those columns show a dash for it.
+        function renderCombinedTable(chartData, algorithms, note, randomBaseline) {
+            const zoomed = !!equityCurveZoomRange;
+            const fullN = chartData ? chartData.dates.length : 0;
+            const zStart = zoomed ? equityCurveZoomRange.start : 0;
+            const zEnd = zoomed ? equityCurveZoomRange.end : fullN - 1;
+
+            const lineNames = chartData ? Object.keys(chartData.lines) : Object.keys(algorithms || {});
+            if (chartData && !equityCurveVisibleLines) equityCurveVisibleLines = new Set(lineNames);
+
+            const algoNames = lineNames.filter(n => n !== 'All (combined)')
+                .sort((a, b) => (algorithms?.[b]?.lift ?? -Infinity) - (algorithms?.[a]?.lift ?? -Infinity));
+            const orderedNames = lineNames.includes('All (combined)') ? ['All (combined)', ...algoNames] : algoNames;
+
+            const rowsHtml = orderedNames.map(name => {
+                const color = EQUITY_LINE_COLORS[name] || '#aaaaaa';
+                const checked = !equityCurveVisibleLines || equityCurveVisibleLines.has(name);
+                const eq = chartData?.lines[name] ? equityLineStats(chartData.lines[name], zoomed, zStart, zEnd) : null;
+                const s = algorithms?.[name];
+                const be = breakevenWinRate(s);
+                const vsBe = be != null ? s.filtered - be : null;
+                return `
+                <div class="algo-backtest-row">
+                    <span class="algo-name">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" ${checked ? 'checked' : ''} ${chartData ? '' : 'disabled'} onchange="toggleEquityLine('${name}')" style="accent-color:${color};cursor:pointer;flex-shrink:0;" />
+                            <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+                            <span style="white-space:nowrap;">${name}</span>
+                        </label>
+                    </span>
+                    <span>${eq ? eq.n_trades : '—'}</span>
+                    <span>${eq ? (eq.win_rate * 100).toFixed(0) + '%' : '—'}</span>
+                    <span style="color:${eq && eq.total_r >= 0 ? '#6fcf97' : eq ? '#eb5757' : 'inherit'};">${eq ? (eq.total_r >= 0 ? '+' : '') + eq.total_r.toFixed(0) + 'R' : '—'}</span>
+                    <span>${s ? (s.unconditional * 100).toFixed(0) + '%' : '—'}</span>
+                    <span>${s ? (s.filtered * 100).toFixed(0) + '%' : '—'}</span>
+                    <span title="${be != null ? `Breakeven at this algorithm's realized ${s.realized_rr.toFixed(2)}:1 R:R = ${(be * 100).toFixed(1)}% win rate` : ''}" style="color:${vsBe == null ? 'inherit' : vsBe >= 0 ? '#6fcf97' : '#eb5757'};cursor:${be != null ? 'help' : 'default'};">${vsBe == null ? '—' : (vsBe >= 0 ? '+' : '') + (vsBe * 100).toFixed(1) + 'pp'}</span>
+                    <span class="algo-lift">${s ? (s.lift >= 0 ? '+' : '') + (s.lift * 100).toFixed(1) + 'pp' : '—'}</span>
+                    <span>${s && s.z != null ? s.z.toFixed(1) : '—'}</span>
+                    <span>${s ? s.n_holdout : '—'}</span>
+                    <span>${s && s.realized_rr != null ? s.realized_rr.toFixed(2) + ':1' : '—'}</span>
+                </div>`;
+            }).join('');
+
+            return `
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">
+                    ${randomBaseline != null ? `Random baseline: <span style="color:rgba(255,255,255,0.7);">${(randomBaseline * 100).toFixed(1)}%</span> &middot; ` : ''}
+                    "vs BE" = filtered win rate minus the breakeven win rate at that algorithm's own <em>realized</em> R:R (avg MFE/MAE, hover for the exact number) - not the fixed 2:1 label assumption, which overstates what price actually delivers
+                    &middot; "Filtered" = top-half by the trained model's predicted P(bounce)
+                    ${zoomed ? ' &middot; Trades/Win/Total R reflect the zoomed date range' : ''}
+                    &middot; Check/uncheck a row to show/hide it on the chart above
+                </div>
+                <div style="overflow-x:auto;">
+                <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;min-width:640px;">
+                    <div class="algo-backtest-header">
+                        <span>Algorithm</span><span>Trades</span><span>Win</span><span>Total R</span><span>Raw</span><span>Filtered</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Realized R:R</span>
+                    </div>
+                    ${rowsHtml}
+                </div>
+                </div>
+                ${note ? `<div class="zone-backtest-note" style="margin-top:16px;">${note}</div>` : ''}
+            `;
+        }
+
         function updateEquityCurveDisplay() {
-            const container = document.getElementById('equityCurveChartContainer');
-            if (!equityCurveData) return;
+            const chartContainer = document.getElementById('equityCurveChartContainer');
+            const tableContainer = document.getElementById('algoBacktestContainer');
             const ticker = document.getElementById('algo-ticker').value;
             const timeframe = document.getElementById('algo-timeframe').value;
             const key = `${ticker}_${timeframe}`;
-            container.innerHTML = renderEquityCurveChart(equityCurveData.by_instrument[key]);
+            const chartData = equityCurveData ? equityCurveData.by_instrument[key] : null;
+            const algorithms = algoBacktestData ? algoBacktestData.by_instrument[key] : null;
+
+            if (!equityCurveData && !algoBacktestData) return;
+
+            chartContainer.innerHTML = chartData ? renderEquityCurveChart(chartData) : (equityCurveData ? '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No equity curve data for this combo.</div>' : '');
             attachEquityCurveZoomHandlers();
+
+            if (!chartData && !algorithms) {
+                tableContainer.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No backtest data for ${ticker} ${timeframe}.</div>`;
+            } else {
+                tableContainer.innerHTML = renderCombinedTable(chartData, algorithms, algoBacktestData?.note, algoBacktestData?.random_baseline);
+            }
         }
 
         function renderSelectedEquityCurve() {
@@ -2248,75 +2335,20 @@
             } catch (err) {}
         }
 
-        // Fixed 2:1 target:stop across every algorithm/instrument in this
-        // backtest (bounced = +2R, broken = -1R) - breakeven win rate is
-        // 1/(1+R:R) = 1/3, a constant, not something computed per-row.
-        const BREAKEVEN_WIN_RATE = 1 / 3;
-
-        function renderAlgoBacktestTable(algorithms, note, randomBaseline) {
-            const rows = Object.entries(algorithms).sort((a, b) => b[1].lift - a[1].lift);
-            return `
-                ${randomBaseline != null ? `
-                <div style="font-size:0.68rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">
-                    Random baseline: <span style="color:rgba(255,255,255,0.7);">${(randomBaseline * 100).toFixed(1)}%</span>
-                    &middot; Breakeven win rate at the fixed 2:1 target:stop: <span style="color:rgba(255,255,255,0.7);">${(BREAKEVEN_WIN_RATE * 100).toFixed(1)}%</span>
-                    &middot; "Filtered" = top-half by the trained model's predicted P(bounce)
-                </div>
-                ` : ''}
-                <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;">
-                    <div class="algo-backtest-header">
-                        <span>Algorithm</span><span>Raw</span><span>Filtered</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Realized R:R</span>
-                    </div>
-                    ${rows.map(([name, s]) => { const vsBe = s.filtered - BREAKEVEN_WIN_RATE; return `
-                    <div class="algo-backtest-row">
-                        <span class="algo-name">${name}</span>
-                        <span>${(s.unconditional * 100).toFixed(0)}%</span>
-                        <span>${(s.filtered * 100).toFixed(0)}%</span>
-                        <span style="color:${vsBe >= 0 ? '#6fcf97' : '#eb5757'};">${vsBe >= 0 ? '+' : ''}${(vsBe * 100).toFixed(1)}pp</span>
-                        <span class="algo-lift">${s.lift >= 0 ? '+' : ''}${(s.lift * 100).toFixed(1)}pp</span>
-                        <span>${s.z != null ? s.z.toFixed(1) : '—'}</span>
-                        <span>${s.n_holdout}</span>
-                        <span>${s.realized_rr != null ? s.realized_rr.toFixed(2) + ':1' : '—'}</span>
-                    </div>`; }).join('')}
-                </div>
-                <div class="zone-backtest-note" style="margin-top:16px;">${note}</div>
-            `;
-        }
-
-        function renderSelectedAlgoBacktest() {
-            const container = document.getElementById('algoBacktestContainer');
-            if (!algoBacktestData) return;
-            const ticker = document.getElementById('algo-ticker').value;
-            const timeframe = document.getElementById('algo-timeframe').value;
-            const key = `${ticker}_${timeframe}`;
-            const algorithms = algoBacktestData.by_instrument[key];
-            if (!algorithms) {
-                container.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No backtest data for ${ticker} ${timeframe}.</div>`;
-                return;
-            }
-            container.innerHTML = renderAlgoBacktestTable(algorithms, algoBacktestData.note, algoBacktestData.random_baseline);
-        }
-
         async function fetchAndRenderAlgoBacktest() {
-            const container = document.getElementById('algoBacktestContainer');
-            if (algoBacktestData) { renderSelectedAlgoBacktest(); return; }
-            container.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Loading…</div>';
+            if (algoBacktestData) { updateEquityCurveDisplay(); return; }
             try {
                 const resp = await fetchWithRetry(`${API_BASE}/api/level-algo-backtest`);
                 const data = await resp.json();
-                if (!data.success) {
-                    container.innerHTML = '<div style="color:rgba(239,68,68,0.6);font-size:0.85rem;">Could not load backtest data.</div>';
-                    return;
+                if (data.success) {
+                    algoBacktestData = data;
+                    updateEquityCurveDisplay();
                 }
-                algoBacktestData = data;
-                renderSelectedAlgoBacktest();
-            } catch (err) {
-                container.innerHTML = '<div style="color:rgba(239,68,68,0.6);font-size:0.85rem;">Could not reach server.</div>';
-            }
+            } catch (err) {}
         }
 
-        document.getElementById('algo-ticker').addEventListener('change', () => { renderSelectedAlgoBacktest(); renderSelectedEquityCurve(); });
-        document.getElementById('algo-timeframe').addEventListener('change', () => { renderSelectedAlgoBacktest(); renderSelectedEquityCurve(); });
+        document.getElementById('algo-ticker').addEventListener('change', () => { renderSelectedEquityCurve(); fetchAndRenderAlgoBacktest(); });
+        document.getElementById('algo-timeframe').addEventListener('change', () => { renderSelectedEquityCurve(); fetchAndRenderAlgoBacktest(); });
 
     </script>
 </body>
