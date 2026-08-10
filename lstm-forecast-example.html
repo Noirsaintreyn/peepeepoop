@@ -2246,7 +2246,15 @@
                 const eq = chartData?.lines[name] ? equityLineStats(chartData.lines[name], zoomed, zStart, zEnd) : null;
                 const s = algorithms?.[name];
                 const be = breakevenWinRate(s);
-                const vsBe = be != null ? s.filtered - be : null;
+                // vs BE must be computed from eq.win_rate (the SAME number
+                // shown in the "Win" column) not s.filtered - those are two
+                // different win rates from two different median-threshold
+                // groupings (equity curve: per-instrument+timeframe+algo;
+                // accuracy table: per-level_type+timeframe pooled across
+                // instruments) that happen to often be close but aren't the
+                // same population, so Win% - BE% wouldn't reliably equal
+                // vs BE% if it came from s.filtered instead.
+                const vsBe = (be != null && eq) ? eq.win_rate - be : null;
                 return `
                 <div class="algo-backtest-row">
                     <span class="algo-name">
@@ -2260,7 +2268,7 @@
                     <span>${eq ? (eq.win_rate * 100).toFixed(0) + '%' : '—'}</span>
                     <span style="color:${eq && eq.total_r >= 0 ? '#6fcf97' : eq ? '#eb5757' : 'inherit'};">${eq ? (eq.total_r >= 0 ? '+' : '') + eq.total_r.toFixed(0) + 'R' : '—'}</span>
                     <span title="${be != null ? `Breakeven win rate at this algorithm's realized ${s.realized_rr.toFixed(2)}:1 R:R` : ''}" style="cursor:${be != null ? 'help' : 'default'};">${be != null ? (be * 100).toFixed(1) + '%' : '—'}</span>
-                    <span title="${s ? `Filtered win rate: ${(s.filtered * 100).toFixed(1)}%` : ''}" style="color:${vsBe == null ? 'inherit' : vsBe >= 0 ? '#6fcf97' : '#eb5757'};cursor:${s ? 'help' : 'default'};">${vsBe == null ? '—' : (vsBe >= 0 ? '+' : '') + (vsBe * 100).toFixed(1) + 'pp'}</span>
+                    <span title="${vsBe != null ? `${(eq.win_rate * 100).toFixed(1)}% win − ${(be * 100).toFixed(1)}% breakeven` : ''}" style="color:${vsBe == null ? 'inherit' : vsBe >= 0 ? '#6fcf97' : '#eb5757'};cursor:${vsBe != null ? 'help' : 'default'};">${vsBe == null ? '—' : (vsBe >= 0 ? '+' : '') + (vsBe * 100).toFixed(1) + 'pp'}</span>
                     <span class="algo-lift">${s ? (s.lift >= 0 ? '+' : '') + (s.lift * 100).toFixed(1) + 'pp' : '—'}</span>
                     <span>${s && s.z != null ? s.z.toFixed(1) : '—'}</span>
                     <span>${s ? s.n_holdout : '—'}</span>
@@ -2271,9 +2279,8 @@
             return `
                 <div style="font-size:0.68rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">
                     ${randomBaseline != null ? `Random baseline: <span style="color:rgba(255,255,255,0.7);">${(randomBaseline * 100).toFixed(1)}%</span> &middot; ` : ''}
-                    "vs BE" = filtered win rate minus the breakeven win rate at that algorithm's own <em>realized</em> R:R (avg MFE/MAE, hover for the exact number) - not the fixed 2:1 label assumption, which overstates what price actually delivers
-                    &middot; "Filtered" = top-half by the trained model's predicted P(bounce)
-                    ${zoomed ? ' &middot; Trades/Win/Total R reflect the zoomed date range' : ''}
+                    "vs BE" = Win% minus BE% &middot; "BE" = breakeven win rate at that algorithm's own <em>realized</em> R:R (avg MFE/MAE, hover for details) - not the fixed 2:1 label assumption, which overstates what price actually delivers
+                    ${zoomed ? ' &middot; Trades/Win/Total R/vs BE reflect the zoomed date range' : ''}
                     &middot; Check/uncheck a row to show/hide it on the chart above
                 </div>
                 <div style="overflow-x:auto;">
