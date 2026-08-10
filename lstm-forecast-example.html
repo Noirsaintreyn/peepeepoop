@@ -595,7 +595,7 @@
 
         .algo-backtest-header, .algo-backtest-row {
             display: grid;
-            grid-template-columns: 1.6fr 0.6fr 0.55fr 0.65fr 0.55fr 0.65fr 0.7fr 0.65fr 0.45fr 0.5fr 0.95fr;
+            grid-template-columns: 1.6fr 0.6fr 0.55fr 0.65fr 0.55fr 0.7fr 0.65fr 0.45fr 0.5fr 0.95fr;
             gap: 6px;
             padding: 3px 0;
         }
@@ -2259,9 +2259,8 @@
                     <span>${eq ? eq.n_trades : '—'}</span>
                     <span>${eq ? (eq.win_rate * 100).toFixed(0) + '%' : '—'}</span>
                     <span style="color:${eq && eq.total_r >= 0 ? '#6fcf97' : eq ? '#eb5757' : 'inherit'};">${eq ? (eq.total_r >= 0 ? '+' : '') + eq.total_r.toFixed(0) + 'R' : '—'}</span>
-                    <span>${s ? (s.unconditional * 100).toFixed(0) + '%' : '—'}</span>
-                    <span>${s ? (s.filtered * 100).toFixed(0) + '%' : '—'}</span>
-                    <span title="${be != null ? `Breakeven at this algorithm's realized ${s.realized_rr.toFixed(2)}:1 R:R = ${(be * 100).toFixed(1)}% win rate` : ''}" style="color:${vsBe == null ? 'inherit' : vsBe >= 0 ? '#6fcf97' : '#eb5757'};cursor:${be != null ? 'help' : 'default'};">${vsBe == null ? '—' : (vsBe >= 0 ? '+' : '') + (vsBe * 100).toFixed(1) + 'pp'}</span>
+                    <span title="${be != null ? `Breakeven win rate at this algorithm's realized ${s.realized_rr.toFixed(2)}:1 R:R` : ''}" style="cursor:${be != null ? 'help' : 'default'};">${be != null ? (be * 100).toFixed(1) + '%' : '—'}</span>
+                    <span title="${s ? `Filtered win rate: ${(s.filtered * 100).toFixed(1)}%` : ''}" style="color:${vsBe == null ? 'inherit' : vsBe >= 0 ? '#6fcf97' : '#eb5757'};cursor:${s ? 'help' : 'default'};">${vsBe == null ? '—' : (vsBe >= 0 ? '+' : '') + (vsBe * 100).toFixed(1) + 'pp'}</span>
                     <span class="algo-lift">${s ? (s.lift >= 0 ? '+' : '') + (s.lift * 100).toFixed(1) + 'pp' : '—'}</span>
                     <span>${s && s.z != null ? s.z.toFixed(1) : '—'}</span>
                     <span>${s ? s.n_holdout : '—'}</span>
@@ -2278,9 +2277,9 @@
                     &middot; Check/uncheck a row to show/hide it on the chart above
                 </div>
                 <div style="overflow-x:auto;">
-                <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;min-width:860px;">
+                <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;min-width:780px;">
                     <div class="algo-backtest-header">
-                        <span>Algorithm</span><span>Trades</span><span>Win</span><span>Total R</span><span>Raw</span><span>Filtered</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Avg MAE:MFE (ATR)</span>
+                        <span>Algorithm</span><span>Trades</span><span>Win</span><span>Total R</span><span>BE</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Avg MAE:MFE (ATR)</span>
                     </div>
                     ${rowsHtml}
                 </div>
