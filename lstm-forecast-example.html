@@ -2265,7 +2265,7 @@
                     <span class="algo-lift">${s ? (s.lift >= 0 ? '+' : '') + (s.lift * 100).toFixed(1) + 'pp' : '—'}</span>
                     <span>${s && s.z != null ? s.z.toFixed(1) : '—'}</span>
                     <span>${s ? s.n_holdout : '—'}</span>
-                    <span>${s && s.avg_mfe_atr != null ? s.avg_mfe_atr.toFixed(2) + ':' + s.avg_mae_atr.toFixed(2) : '—'}</span>
+                    <span>${s && s.avg_mfe_atr != null ? s.avg_mae_atr.toFixed(2) + ':' + s.avg_mfe_atr.toFixed(2) : '—'}</span>
                 </div>`;
             }).join('');
 
@@ -2280,7 +2280,7 @@
                 <div style="overflow-x:auto;">
                 <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;min-width:640px;">
                     <div class="algo-backtest-header">
-                        <span>Algorithm</span><span>Trades</span><span>Win</span><span>Total R</span><span>Raw</span><span>Filtered</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Avg MFE:MAE (ATR)</span>
+                        <span>Algorithm</span><span>Trades</span><span>Win</span><span>Total R</span><span>Raw</span><span>Filtered</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Avg MAE:MFE (ATR)</span>
                     </div>
                     ${rowsHtml}
                 </div>
