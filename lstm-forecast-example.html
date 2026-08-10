@@ -595,7 +595,7 @@
 
         .algo-backtest-header, .algo-backtest-row {
             display: grid;
-            grid-template-columns: 1.6fr 0.6fr 0.55fr 0.65fr 0.55fr 0.7fr 0.65fr 0.45fr 0.5fr 0.95fr;
+            grid-template-columns: 1.6fr 0.6fr 0.55fr 0.65fr 0.55fr 0.7fr 0.65fr 0.45fr 0.5fr 0.95fr 0.65fr;
             gap: 6px;
             padding: 3px 0;
         }
@@ -2273,6 +2273,7 @@
                     <span>${s && s.z != null ? s.z.toFixed(1) : '—'}</span>
                     <span>${s ? s.n_holdout : '—'}</span>
                     <span>${s && s.avg_mfe_atr != null ? s.avg_mae_atr.toFixed(2) + ':' + s.avg_mfe_atr.toFixed(2) : '—'}</span>
+                    <span>${s && s.realized_rr != null ? s.realized_rr.toFixed(2) + ':1' : '—'}</span>
                 </div>`;
             }).join('');
 
@@ -2284,9 +2285,9 @@
                     &middot; Check/uncheck a row to show/hide it on the chart above
                 </div>
                 <div style="overflow-x:auto;">
-                <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;min-width:780px;">
+                <div class="algo-backtest-table" style="margin-top:0;padding-top:0;border-top:none;min-width:860px;">
                     <div class="algo-backtest-header">
-                        <span>Algorithm</span><span>Trades</span><span>Win</span><span>Total R</span><span>BE</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Avg MAE:MFE (ATR)</span>
+                        <span>Algorithm</span><span>Trades</span><span>Win</span><span>Total R</span><span>BE</span><span>vs BE</span><span>Lift</span><span>z</span><span>n</span><span>Avg MAE:MFE (ATR)</span><span>Realized R:R</span>
                     </div>
                     ${rowsHtml}
                 </div>
