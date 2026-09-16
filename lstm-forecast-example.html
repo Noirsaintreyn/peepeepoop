@@ -2602,7 +2602,8 @@
             }
             if (report.sector_breadth) {
                 const b = report.sector_breadth;
-                html += row('Sector Breadth', `${b.pct_bullish.toFixed(0)}% bullish of ${b.n_peers} in ${b.sector} (${b.dispersion})`);
+                const label = b.grouping === 'sub-industry' ? 'Peer Breadth' : 'Sector Breadth (broad)';
+                html += row(label, `${b.pct_bullish.toFixed(0)}% bullish of ${b.n_peers} in ${b.sector} (${b.dispersion})`);
             }
             if (report.fundamentals) {
                 const f = report.fundamentals;
