@@ -2610,6 +2610,15 @@
                 html += row('Fundamentals', `${f.n_passed}/${f.n_total} checks passed (${f.strict_pass ? 'PASS' : 'fail'})`);
             }
             html += row('Move Size', report.move_size);
+            if (report.expected_move) {
+                const m = report.expected_move;
+                html += row('Expected Move (30-70%)', `$${m.low_30.toFixed(2)} &ndash; $${m.high_70.toFixed(2)}`);
+                html += row('Expected Move (10-90%)', `$${m.low_10.toFixed(2)} &ndash; $${m.high_90.toFixed(2)}`);
+                if (m.vs_typical_pct != null) {
+                    const tag = m.vs_typical_pct > 15 ? 'wider than typical' : m.vs_typical_pct < -15 ? 'narrower than typical' : 'near typical';
+                    html += row('Range vs Typical', `${m.vs_typical_pct >= 0 ? '+' : ''}${m.vs_typical_pct.toFixed(0)}% (${tag})`);
+                }
+            }
             html += `</div>`;
             return html;
         }
