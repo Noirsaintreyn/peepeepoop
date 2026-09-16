@@ -629,6 +629,107 @@
             font-weight: 500;
         }
 
+        /* Valiant Panel */
+        .valiant-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border: 1px solid rgba(201, 162, 39, 0.12);
+            margin-bottom: 32px;
+        }
+
+        .valiant-stats .metric {
+            border-right: 1px solid rgba(201, 162, 39, 0.12);
+        }
+
+        .valiant-stats .metric:last-child {
+            border-right: none;
+        }
+
+        .valiant-table {
+            margin-top: 4px;
+        }
+
+        .valiant-header, .valiant-row {
+            display: grid;
+            grid-template-columns: 0.8fr 1.6fr 0.6fr 0.7fr 0.8fr;
+            gap: 6px;
+            padding: 8px 0;
+        }
+
+        .valiant-header {
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.3);
+            border-bottom: 1px solid rgba(201, 162, 39, 0.12);
+        }
+
+        .valiant-row {
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.75);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .valiant-header span:not(:first-child), .valiant-row span:not(:first-child) {
+            text-align: right;
+        }
+
+        .valiant-row .valiant-ticker {
+            color: #ffffff;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .valiant-note {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 16px;
+            line-height: 1.6;
+        }
+
+        .valiant-report {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(201, 162, 39, 0.12);
+        }
+
+        .valiant-report-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.78rem;
+        }
+
+        .valiant-report-row .label {
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-size: 0.62rem;
+            padding-top: 2px;
+        }
+
+        .valiant-report-row .value {
+            color: rgba(255, 255, 255, 0.85);
+            text-align: right;
+            max-width: 68%;
+        }
+
+        .valiant-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 1px;
+            font-size: 0.62rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .valiant-pill.bullish { background: rgba(111, 207, 151, 0.12); color: #6fcf97; }
+        .valiant-pill.bearish { background: rgba(235, 87, 87, 0.12); color: #eb5757; }
+        .valiant-pill.neutral { background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.6); }
+
 
         /* Cover Page */
         .cover-overlay {
@@ -842,6 +943,7 @@
         <ul class="nav-links">
             <li><a href="#" class="active" data-tab="forecast">Forecast</a></li>
             <li><a href="#" data-tab="data">Data</a></li>
+            <li><a href="#" data-tab="valiant">Valiant</a></li>
         </ul>
     </nav>
 
@@ -916,6 +1018,48 @@
                 </div>
                 <div id="equityCurveChartContainer" style="padding-top:16px;"></div>
                 <div id="algoBacktestContainer" style="padding-top:12px;"></div>
+            </div>
+
+            <!-- Valiant Selection Stack Panel -->
+            <div class="forecast-panel" id="valiantPanel" style="display: none;">
+                <div class="panel-header">
+                    <div class="panel-title">Valiant Selection Stack</div>
+                    <div class="panel-badge">Paper Tracking</div>
+                </div>
+
+                <div id="valiantStatusContainer">
+                    <div class="loading">Loading ledger&hellip;</div>
+                </div>
+
+                <div class="valiant-report">
+                    <div class="panel-header" style="margin-bottom:24px;padding-bottom:16px;">
+                        <div class="panel-title" style="font-size:1.1rem;">Look Up a Ticker</div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label for="valiant-ticker">Ticker</label>
+                            <input type="text" id="valiant-ticker" value="AAPL" placeholder="AAPL, NVDA, etc.">
+                        </div>
+                        <div class="control-group">
+                            <label for="valiant-timeframe">Timeframe</label>
+                            <select id="valiant-timeframe">
+                                <option value="daily" selected>Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="control-group full-width">
+                            <button class="btn" id="getValiantLookup">Look Up</button>
+                        </div>
+                    </div>
+                    <div id="valiantLookupContainer"></div>
+                </div>
+
+                <div class="valiant-note">
+                    Frozen 2026-09-15: real-time S&amp;P 500 membership, fundamentals-gated recent-bullish-flip
+                    quality z-rank, top 5, 30% sector cap, inverse-vol weighted, flat exposure. In-sample backtest
+                    only &mdash; this ledger is the out-of-sample record. A state description, not a trade signal.
+                </div>
             </div>
 
         </div>
@@ -2012,8 +2156,9 @@
         });
         // ===== Tab Switching =====
         const navLinks = document.querySelectorAll('.nav-links a[data-tab]');
-        const forecastPanel = document.querySelector('.forecast-panel:not(#dataPanel)');
+        const forecastPanel = document.querySelector('.forecast-panel:not(#dataPanel):not(#valiantPanel)');
         const dataPanel    = document.getElementById('dataPanel');
+        const valiantPanel = document.getElementById('valiantPanel');
 
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -2023,10 +2168,14 @@
                 const tab = link.dataset.tab;
                 forecastPanel.style.display = 'none';
                 dataPanel.style.display     = 'none';
+                valiantPanel.style.display  = 'none';
                 if (tab === 'data') {
                     dataPanel.style.display = 'block';
                     fetchAndRenderEquityCurve();
                     fetchAndRenderAlgoBacktest();
+                } else if (tab === 'valiant') {
+                    valiantPanel.style.display = 'block';
+                    fetchAndRenderValiantStatus();
                 } else {
                     forecastPanel.style.display = 'block';
                 }
@@ -2356,6 +2505,139 @@
 
         document.getElementById('algo-ticker').addEventListener('change', () => { renderSelectedEquityCurve(); fetchAndRenderAlgoBacktest(); });
         document.getElementById('algo-timeframe').addEventListener('change', () => { renderSelectedEquityCurve(); fetchAndRenderAlgoBacktest(); });
+
+        // ===== Valiant Selection Stack =====
+        let valiantStatusData = null;  // fetched once per page load, cached
+
+        function renderValiantStatus(data) {
+            const ledger = data.ledger || [];
+            if (ledger.length === 0) {
+                return '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No paper-tracking entries recorded yet.</div>';
+            }
+            const latest = ledger[ledger.length - 1];
+            const picks = latest.picks || [];
+
+            const statsHtml = `
+                <div class="valiant-stats">
+                    <div class="metric">
+                        <div class="metric-label">Months Tracked</div>
+                        <div class="metric-value">${ledger.length}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Live Picks</div>
+                        <div class="metric-value">${picks.length}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">As Of</div>
+                        <div class="metric-value" style="font-size:0.82rem;">${latest.as_of}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Forward Return</div>
+                        <div class="metric-value" style="color:${latest.basket_forward_return_flat >= 0 ? '#6fcf97' : '#eb5757'};">
+                            ${latest.basket_forward_return_flat != null ? (latest.basket_forward_return_flat >= 0 ? '+' : '') + (latest.basket_forward_return_flat * 100).toFixed(2) + '%' : '&mdash;'}
+                        </div>
+                    </div>
+                </div>`;
+
+            const rowsHtml = picks.map(p => `
+                <div class="valiant-row">
+                    <span class="valiant-ticker">${p.ticker}</span>
+                    <span style="text-align:left;">${p.sector}</span>
+                    <span>${p.z >= 0 ? '+' : ''}${p.z.toFixed(2)}</span>
+                    <span>${(p.weight_flat * 100).toFixed(1)}%</span>
+                    <span>$${p.entry_price.toFixed(2)}</span>
+                </div>`).join('');
+
+            return `
+                ${statsHtml}
+                <div class="valiant-table">
+                    <div class="valiant-header">
+                        <span>Ticker</span><span style="text-align:left;">Sector</span><span>Z</span><span>Weight</span><span>Entry</span>
+                    </div>
+                    ${rowsHtml}
+                </div>`;
+        }
+
+        async function fetchAndRenderValiantStatus() {
+            const container = document.getElementById('valiantStatusContainer');
+            if (valiantStatusData) { container.innerHTML = renderValiantStatus(valiantStatusData); return; }
+            try {
+                const resp = await fetchWithRetry(`${API_BASE}/api/valiant-status`, { credentials: 'include' });
+                const data = await resp.json();
+                if (data.success) {
+                    valiantStatusData = data;
+                    container.innerHTML = renderValiantStatus(data);
+                } else {
+                    container.innerHTML = `<div style="color:rgba(235,87,87,0.8);font-size:0.85rem;">${data.error || 'Could not load the ledger.'}</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="color:rgba(235,87,87,0.8);font-size:0.85rem;">Could not reach the server. Try again in a moment.</div>';
+            }
+        }
+
+        function renderValiantReport(report) {
+            const pill = (cls, text) => `<span class="valiant-pill ${cls}">${text}</span>`;
+            const classPill = report.classification === 'BULLISH' ? pill('bullish', 'Bullish')
+                : report.classification === 'BEARISH' ? pill('bearish', 'Bearish')
+                : pill('neutral', report.classification.replace('_', ' '));
+
+            const row = (label, value) => `
+                <div class="valiant-report-row">
+                    <span class="label">${label}</span>
+                    <span class="value">${value}</span>
+                </div>`;
+
+            let html = `<div class="valiant-report">`;
+            html += row('Classification', classPill);
+            html += row('Reason', report.reason);
+            html += row('Regime', `${report.current_regime} &middot; ${report.bars_since_flip} bars since flip &middot; z=${report.quality_z.toFixed(2)}`);
+            if (report.maturity) {
+                html += row('Maturity', `${report.maturity.percentile.toFixed(0)}th percentile of past episodes (n=${report.maturity.n})`);
+            }
+            if (report.market_stress_prob != null) {
+                html += row('Market Regime', `${report.market_stressed ? 'Stressed' : 'Calm'} (P=${report.market_stress_prob.toFixed(2)})`);
+            }
+            if (report.confirmation_regime) {
+                html += row('Confirmation', `${report.confirmation_timeframe}: ${report.confirmation_regime} (${report.confirmation_agrees ? 'agrees' : 'disagrees'})`);
+            }
+            if (report.sector_breadth) {
+                const b = report.sector_breadth;
+                html += row('Sector Breadth', `${b.pct_bullish.toFixed(0)}% bullish of ${b.n_peers} in ${b.sector} (${b.dispersion})`);
+            }
+            if (report.fundamentals) {
+                const f = report.fundamentals;
+                html += row('Fundamentals', `${f.n_passed}/${f.n_total} checks passed (${f.strict_pass ? 'PASS' : 'fail'})`);
+            }
+            html += row('Move Size', report.move_size);
+            html += `</div>`;
+            return html;
+        }
+
+        document.getElementById('getValiantLookup').addEventListener('click', async () => {
+            const btn = document.getElementById('getValiantLookup');
+            const ticker = document.getElementById('valiant-ticker').value.trim().toUpperCase();
+            const timeframe = document.getElementById('valiant-timeframe').value;
+            const container = document.getElementById('valiantLookupContainer');
+            if (!ticker) return;
+            btn.disabled = true;
+            container.innerHTML = '<div class="loading">Reading the state&hellip;</div>';
+            try {
+                const url = new URL(`${API_BASE}/api/valiant-lookup`);
+                url.searchParams.set('ticker', ticker);
+                url.searchParams.set('timeframe', timeframe);
+                const resp = await fetchWithRetry(url.toString(), { credentials: 'include' });
+                const data = await resp.json();
+                if (data.success) {
+                    container.innerHTML = renderValiantReport(data.report);
+                } else {
+                    container.innerHTML = `<div style="color:rgba(235,87,87,0.8);font-size:0.85rem;padding-top:16px;">${data.error || 'No read available for this ticker.'}</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="color:rgba(235,87,87,0.8);font-size:0.85rem;padding-top:16px;">Could not reach the server. Try again in a moment.</div>';
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
     </script>
 </body>
