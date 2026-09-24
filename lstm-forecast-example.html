@@ -181,6 +181,79 @@
             border-radius: 1px;
         }
 
+        .tp-explainer {
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: rgba(232, 230, 227, 0.65);
+            margin-bottom: 32px;
+            padding: 18px 20px;
+            background: rgba(201, 162, 39, 0.02);
+            border-left: 2px solid rgba(201, 162, 39, 0.25);
+        }
+        .tp-explainer p { margin-bottom: 10px; }
+        .tp-explainer p:last-child { margin-bottom: 0; }
+        .tp-explainer strong { color: rgba(201, 162, 39, 0.85); font-weight: 500; }
+
+        .tp-result { margin-top: 32px; }
+        .tp-prob-row { display: flex; gap: 40px; margin-bottom: 28px; flex-wrap: wrap; }
+        .tp-prob-stat .tp-prob-value {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 2.8rem;
+            font-weight: 500;
+            color: #c9a227;
+            line-height: 1;
+        }
+        .tp-prob-stat .tp-prob-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(232, 230, 227, 0.4);
+            margin-top: 8px;
+        }
+        .tp-canvas-wrap {
+            position: relative;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(201, 162, 39, 0.12);
+            border-radius: 2px;
+            padding: 16px;
+        }
+        #tpCanvas { width: 100%; display: block; }
+        .tp-tally { display: flex; gap: 28px; margin-top: 16px; font-size: 0.75rem; letter-spacing: 0.05em; }
+        .tp-tally span.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .tp-tally .target-dot { background: #22c55e; }
+        .tp-tally .stop-dot { background: #ef4444; }
+        .tp-tally .running-dot { background: rgba(232, 230, 227, 0.3); }
+
+        .tp-signal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 22px;
+            border: 1px solid rgba(201, 162, 39, 0.4);
+            border-radius: 2px;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #c9a227;
+            margin-bottom: 24px;
+        }
+        .tp-signal-badge .validated-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.62rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 1px;
+        }
+        .tp-signal-badge .validated-tag.yes { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .tp-signal-badge .validated-tag.no { background: rgba(232, 230, 227, 0.08); color: rgba(232, 230, 227, 0.4); }
+
+        .tp-stats-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 28px; }
+        .tp-stats-table th, .tp-stats-table td { text-align: left; padding: 8px 14px; border-bottom: 1px solid rgba(201, 162, 39, 0.1); }
+        .tp-stats-table th { color: rgba(201, 162, 39, 0.6); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.65rem; }
+        .tp-stats-table td { color: rgba(232, 230, 227, 0.75); }
+        .tp-stats-note { font-size: 0.72rem; color: rgba(232, 230, 227, 0.4); margin-bottom: 28px; }
+
         /* Form Controls */
         .controls {
             display: grid;
@@ -944,6 +1017,7 @@
             <li><a href="#" class="active" data-tab="forecast">Forecast</a></li>
             <li><a href="#" data-tab="data">Data</a></li>
             <li><a href="#" data-tab="valiant">Valiant</a></li>
+            <li><a href="#" data-tab="targetprob">Target Prob</a></li>
         </ul>
     </nav>
 
@@ -1060,6 +1134,68 @@
                     quality z-rank, top 5, 30% sector cap, inverse-vol weighted, flat exposure. In-sample backtest
                     only &mdash; this ledger is the out-of-sample record. A state description, not a trade signal.
                 </div>
+            </div>
+
+            <!-- Target Probability Panel -->
+            <div class="forecast-panel" id="targetProbPanel" style="display: none;">
+                <div class="panel-header">
+                    <div class="panel-title">Target Probability</div>
+                    <div class="panel-badge">Price-only · Monte Carlo</div>
+                </div>
+
+                <div class="tp-explainer">
+                    <p><strong>What this is:</strong> simulates thousands of possible price paths from your entry
+                    and checks whether price reaches your target before your stop.</p>
+                    <p><strong>High vs Low:</strong> High means the simulation thinks price has the momentum to
+                    reach the target. Low means it doesn't. Counterintuitively, on 4h charts a <em>Low</em> reading
+                    on a candidate level has meant that level is more likely to hold (act as real support/resistance)
+                    rather than break — so Low is often the more useful reading for a reversion trade, not High.</p>
+                    <p><strong>What to look for:</strong> trust <strong>NVDA, TSLA, META</strong>. Stats for your
+                    selected ticker/timeframe show below once you run a simulation.</p>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="tp-ticker">Ticker</label>
+                        <input type="text" id="tp-ticker" value="NVDA" placeholder="NVDA, TSLA, META...">
+                    </div>
+                    <div class="control-group">
+                        <label for="tp-timeframe">Timeframe</label>
+                        <select id="tp-timeframe">
+                            <option value="1h">1 Hour</option>
+                            <option value="4h" selected>4 Hours</option>
+                            <option value="1d">Daily</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="tp-direction">Direction</label>
+                        <select id="tp-direction">
+                            <option value="long">Long</option>
+                            <option value="short">Short</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="tp-entry">Entry</label>
+                        <input type="number" id="tp-entry" step="any" placeholder="auto: last price">
+                    </div>
+                    <div class="control-group">
+                        <label for="tp-stop">Stop</label>
+                        <input type="number" id="tp-stop" step="any" placeholder="required">
+                    </div>
+                    <div class="control-group">
+                        <label for="tp-target">Target</label>
+                        <input type="number" id="tp-target" step="any" placeholder="required">
+                    </div>
+                    <div class="control-group">
+                        <label for="tp-horizon">Horizon (hours)</label>
+                        <input type="number" id="tp-horizon" value="160" step="1">
+                    </div>
+                    <div class="control-group full-width">
+                        <button class="btn" id="runTargetProb">Run Simulation</button>
+                    </div>
+                </div>
+
+                <div id="targetProbContainer"></div>
             </div>
 
         </div>
@@ -2156,9 +2292,10 @@
         });
         // ===== Tab Switching =====
         const navLinks = document.querySelectorAll('.nav-links a[data-tab]');
-        const forecastPanel = document.querySelector('.forecast-panel:not(#dataPanel):not(#valiantPanel)');
+        const forecastPanel = document.querySelector('.forecast-panel:not(#dataPanel):not(#valiantPanel):not(#targetProbPanel)');
         const dataPanel    = document.getElementById('dataPanel');
         const valiantPanel = document.getElementById('valiantPanel');
+        const targetProbPanel = document.getElementById('targetProbPanel');
 
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -2169,6 +2306,7 @@
                 forecastPanel.style.display = 'none';
                 dataPanel.style.display     = 'none';
                 valiantPanel.style.display  = 'none';
+                targetProbPanel.style.display = 'none';
                 if (tab === 'data') {
                     dataPanel.style.display = 'block';
                     fetchAndRenderEquityCurve();
@@ -2176,6 +2314,8 @@
                 } else if (tab === 'valiant') {
                     valiantPanel.style.display = 'block';
                     fetchAndRenderValiantStatus();
+                } else if (tab === 'targetprob') {
+                    targetProbPanel.style.display = 'block';
                 } else {
                     forecastPanel.style.display = 'block';
                 }
@@ -2648,6 +2788,214 @@
                 btn.disabled = false;
             }
         });
+
+        // ===== Target Probability stats (from backtest_filtered_levels_v1_confluence.py, 2026-09-23) =====
+        // median: this ticker/timeframe's own median calibrated_probability from the backtest -
+        // the threshold a new result is compared against to call it High or Low.
+        // baseline/high/low: bounce accuracy (does the level hold) - overall / V1-high split / V1-low split.
+        // validated: true only for NVDA/TSLA/META with a real, walk-forward-checked effect.
+        const V1_STATS = {
+            '4h': {
+                NVDA: { median: 0.0652, baseline: 0.5201, high: 0.4515, low: 0.6494, n: 1390, validated: true },
+                META: { median: 0.0652, baseline: 0.4484, high: 0.4143, low: 0.5428, n: 1804, validated: true },
+                TSLA: { median: 0.0652, baseline: 0.5435, high: 0.5054, low: 0.6250, n: 955, validated: true },
+                MSFT: { median: 0.1125, baseline: 0.4672, high: 0.4432, low: 0.4949, n: 1888, validated: false },
+                AAPL: { median: 0.1125, baseline: 0.4470, high: 0.4527, low: 0.4410, n: 2027, validated: false },
+                AMD: { median: 0.0652, baseline: 0.4076, high: 0.4516, low: 0.3351, n: 979, validated: false },
+            },
+            '1d': {
+                META: { median: 0.0234, baseline: 0.5918, high: 0.5082, low: 0.6758, n: 365, validated: true },
+                MSFT: { median: 0.0417, baseline: 0.6530, high: 0.5551, low: 0.7597, n: 487, validated: false },
+                AAPL: { median: 0.0051, baseline: 0.4221, high: 0.4387, low: 0.3981, n: 263, validated: false },
+                // NVDA/TSLA/AMD daily: too few touched candidates in the backtest to split - omitted rather than shown
+            },
+            '1h': {
+                // full 6-ticker 1h sweep not run yet - no numbers to show without overclaiming
+            },
+        };
+
+        function tpStatsFor(ticker, timeframe) {
+            return (V1_STATS[timeframe] || {})[ticker] || null;
+        }
+
+        // ===== Target Probability: Monte Carlo race + animation =====
+        document.getElementById('runTargetProb').addEventListener('click', async () => {
+            const tpBtn = document.getElementById('runTargetProb');
+            const tpContainer = document.getElementById('targetProbContainer');
+            const ticker = document.getElementById('tp-ticker').value.trim().toUpperCase();
+            const timeframe = document.getElementById('tp-timeframe').value;
+            const direction = document.getElementById('tp-direction').value;
+            const stop = parseFloat(document.getElementById('tp-stop').value);
+            const target = parseFloat(document.getElementById('tp-target').value);
+            const horizonHours = parseFloat(document.getElementById('tp-horizon').value) || 160;
+            const entryInput = document.getElementById('tp-entry').value;
+
+            if (!stop || !target) {
+                tpContainer.innerHTML = `<div class="lstm-forecast-error"><h3>Error</h3><p>Stop and target are required.</p></div>`;
+                return;
+            }
+            if (!entryInput) {
+                tpContainer.innerHTML = `<div class="lstm-forecast-error"><h3>Entry required</h3><p>Enter an entry price (a "last price" default isn't wired up yet).</p></div>`;
+                return;
+            }
+
+            tpBtn.disabled = true;
+            tpContainer.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(232,230,227,0.5);">Running simulation...</div>`;
+
+            try {
+                const params = new URLSearchParams({
+                    ticker, timeframe, direction, stop, target,
+                    horizon_hours: horizonHours, include_sample_paths: 'true', entry: entryInput,
+                });
+
+                const resp = await fetch(`${API_BASE}/api/target-probability?${params.toString()}`);
+                const result = await resp.json();
+                if (!result.success) throw new Error(result.error || 'Request failed');
+
+                renderTargetProbResult(result);
+            } catch (error) {
+                tpContainer.innerHTML = `<div class="lstm-forecast-error"><h3>Error</h3><p>${error.message}</p></div>`;
+            } finally {
+                tpBtn.disabled = false;
+            }
+        });
+
+        function renderTargetProbResult(result) {
+            const tpContainer = document.getElementById('targetProbContainer');
+            const calPct = (result.calibrated_probability * 100).toFixed(1);
+            const rawPct = (result.raw_probability * 100).toFixed(1);
+            const stats = tpStatsFor(result.ticker, result.timeframe);
+
+            const threshold = stats ? stats.median : 0.5;
+            const signal = result.calibrated_probability >= threshold ? 'HIGH' : 'LOW';
+
+            const badgeHtml = `
+                <div class="tp-signal-badge">
+                    ${signal}
+                    <span class="validated-tag ${stats && stats.validated ? 'yes' : 'no'}">
+                        ${stats && stats.validated ? 'Validated' : 'Not confirmed'}
+                    </span>
+                </div>
+            `;
+
+            const statsHtml = stats ? `
+                <table class="tp-stats-table">
+                    <thead>
+                        <tr><th>${result.ticker} · ${result.timeframe}</th><th>Bounce Accuracy</th><th>n</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Baseline (all levels)</td><td>${(stats.baseline*100).toFixed(1)}%</td><td>${stats.n}</td></tr>
+                        <tr><td>When V1 reads High</td><td>${(stats.high*100).toFixed(1)}%</td><td></td></tr>
+                        <tr><td>When V1 reads Low</td><td>${(stats.low*100).toFixed(1)}%</td><td></td></tr>
+                    </tbody>
+                </table>
+            ` : `<p class="tp-stats-note">No backtest stats for ${result.ticker} at ${result.timeframe} yet.</p>`;
+
+            tpContainer.innerHTML = `
+                <div class="tp-result">
+                    ${badgeHtml}
+                    ${statsHtml}
+                    <div class="tp-prob-row">
+                        <div class="tp-prob-stat">
+                            <div class="tp-prob-value">${calPct}%</div>
+                            <div class="tp-prob-label">Calibrated Probability</div>
+                        </div>
+                        <div class="tp-prob-stat">
+                            <div class="tp-prob-value" style="color: rgba(232,230,227,0.4); font-size: 1.8rem;">${rawPct}%</div>
+                            <div class="tp-prob-label">Raw (uncalibrated)</div>
+                        </div>
+                    </div>
+                    <div class="tp-canvas-wrap">
+                        <canvas id="tpCanvas" width="900" height="360"></canvas>
+                        <div class="tp-tally" id="tpTally">
+                            <span><span class="dot target-dot"></span>Target: <span id="tpTallyTarget">0</span></span>
+                            <span><span class="dot stop-dot"></span>Stop: <span id="tpTallyStop">0</span></span>
+                            <span><span class="dot running-dot"></span>Running: <span id="tpTallyRunning">${result.sample_paths.paths_price.length}</span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (result.sample_paths) {
+                animateMonteCarloRace(result.sample_paths, result.entry, result.stop, result.target);
+            }
+        }
+
+        function animateMonteCarloRace(samplePaths, entry, stop, target) {
+            const canvas = document.getElementById('tpCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            const paths = samplePaths.paths_price;
+            const outcomes = samplePaths.outcome;
+            const hitSteps = samplePaths.hit_step;
+            const nSteps = paths[0].length;
+
+            let yMin = Math.min(stop, target, ...paths.flat());
+            let yMax = Math.max(stop, target, ...paths.flat());
+            const pad = (yMax - yMin) * 0.08 || 1;
+            yMin -= pad; yMax += pad;
+
+            const xOf = (step) => (step / (nSteps - 1)) * (W - 60) + 50;
+            const yOf = (price) => H - 30 - ((price - yMin) / (yMax - yMin)) * (H - 60);
+
+            const COLORS = { target: '#22c55e', stop: '#ef4444', running: 'rgba(201, 162, 39, 0.35)' };
+
+            function drawStatic() {
+                ctx.clearRect(0, 0, W, H);
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = COLORS.target; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(50, yOf(target)); ctx.lineTo(W - 10, yOf(target)); ctx.stroke();
+                ctx.strokeStyle = COLORS.stop;
+                ctx.beginPath(); ctx.moveTo(50, yOf(stop)); ctx.lineTo(W - 10, yOf(stop)); ctx.stroke();
+                ctx.strokeStyle = 'rgba(201, 162, 39, 0.5)';
+                ctx.beginPath(); ctx.moveTo(50, yOf(entry)); ctx.lineTo(W - 10, yOf(entry)); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = COLORS.target; ctx.font = '11px Inter'; ctx.fillText('target', 8, yOf(target) + 4);
+                ctx.fillStyle = COLORS.stop; ctx.fillText('stop', 8, yOf(stop) + 4);
+                ctx.fillStyle = 'rgba(201, 162, 39, 0.7)'; ctx.fillText('entry', 8, yOf(entry) + 4);
+            }
+
+            let frame = 0;
+            const totalFrames = nSteps + 20;
+            const staggerPerPath = 1;
+
+            function tick() {
+                drawStatic();
+                let nTarget = 0, nStop = 0, nRunning = 0;
+                paths.forEach((path, i) => {
+                    const startFrame = i * staggerPerPath;
+                    const localFrame = Math.max(0, frame - startFrame);
+                    const upTo = Math.min(localFrame, nSteps - 1);
+                    const resolved = hitSteps[i] >= 0 && upTo >= hitSteps[i];
+                    const color = resolved ? COLORS[outcomes[i]] : COLORS.running;
+
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = resolved ? 1.6 : 1;
+                    ctx.globalAlpha = resolved ? 0.9 : 0.55;
+                    ctx.beginPath();
+                    ctx.moveTo(xOf(0), yOf(path[0]));
+                    const drawUpTo = resolved ? hitSteps[i] : upTo;
+                    for (let s = 1; s <= drawUpTo; s++) ctx.lineTo(xOf(s), yOf(path[s]));
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+
+                    if (localFrame >= nSteps - 1 || resolved) {
+                        if (outcomes[i] === 'target') nTarget++;
+                        else if (outcomes[i] === 'stop') nStop++;
+                        else nRunning++;
+                    } else {
+                        nRunning++;
+                    }
+                });
+                document.getElementById('tpTallyTarget').textContent = nTarget;
+                document.getElementById('tpTallyStop').textContent = nStop;
+                document.getElementById('tpTallyRunning').textContent = nRunning;
+
+                frame++;
+                if (frame < totalFrames) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
 
     </script>
 </body>
