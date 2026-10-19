@@ -11,10 +11,8 @@ fs.copyFileSync(
   path.join(distDir, 'lstm-forecast-example.html')
 );
 
-// Copy lstm-forecast-example.html as index.html so root URL works
-fs.copyFileSync(
-  path.join(__dirname, 'lstm-forecast-example.html'),
-  path.join(distDir, 'index.html')
-);
+// The screener site is the home page; the old forecast page lives at /forecast.html
+fs.copyFileSync(path.join(__dirname, 'site.html'), path.join(distDir, 'index.html'));
+fs.copyFileSync(path.join(__dirname, 'lstm-forecast-example.html'), path.join(distDir, 'forecast.html'));
 
 console.log('Build complete: frontend files copied to dist/');
