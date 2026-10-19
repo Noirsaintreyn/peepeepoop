@@ -53,7 +53,8 @@ td.r,th.r{text-align:right}
 .empty{color:var(--muted);font-size:13px;padding:14px 0}
 .legend{display:flex;flex-wrap:wrap;gap:18px;font-size:12px;color:#c9c7c2}
 .legend span{display:inline-flex;align-items:center;gap:8px}.legend i{width:18px;height:2px;display:inline-block}
-.lc{position:relative;height:340px}.lc canvas{width:100%;height:100%;display:block}
+.vsel{background:transparent;border:1px solid rgba(201,162,39,.3);color:var(--gold);font:inherit;font-size:11px;letter-spacing:.12em;padding:2px 4px;margin-left:4px;border-radius:2px}.vsel option{background:#0a0e1a}
+.lc{position:relative;height:340px}.lc canvas{width:100%;height:100%;display:block}.lc[data-empty]::after{content:attr(data-empty);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
 .holds{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .holds div{border:1px solid var(--line);padding:10px 12px;font-weight:600;letter-spacing:.04em;color:var(--white);font-size:13px}
 .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:18px}
@@ -296,7 +297,8 @@ nav a.navlink{display:inline-flex;align-items:center;padding:10px 14px;min-heigh
     $('histTiles').innerHTML = tile('Book P&L', pct(H.book, 2), 'realized ' + pct(H.realized, 2) + ' · open ' + pct(H.open, 2), cls(H.book)) +
       tile('Closed trades', String(closed.length), (T.length - closed.length) + ' open') +
       tile('Win rate', closed.length ? Math.round(wins.length / closed.length * 100) + '%' : '–', 'avg win ' + pct(mean(wins)) + ' · avg loss ' + pct(mean(losses))) +
-      tile('vs SPY', H.spy == null ? '–' : pct(H.book - H.spy, 2), 'SPY ' + pct(H.spy, 2) + (H.qqq == null ? '' : ' · QQQ ' + pct(H.qqq, 2)) + ' same period', 'gold');
+      '<div class="tile" id="vsTile"></div>';
+    LH = H; renderVs();
     HC = H.curve || null; drawHist();
     $('histTitle').textContent = H.since ? 'Every trade since ' + H.since : 'Every trade';
     $('histEmpty').hidden = T.length > 0;
@@ -305,10 +307,21 @@ nav a.navlink{display:inline-flex;align-items:center;padding:10px 14px;min-heigh
     }).join('');
   }
   document.addEventListener('click', function (e) { var b = e.target.closest('[data-tk]'); if (b) openChart(b.dataset.tk); });
-  var HC = null;
+  var HC = null, LH = null, VS = 'spy';
+  try { VS = localStorage.getItem('lap_vs') || 'spy'; } catch (e) {}
+  function renderVs() {
+    var el = $('vsTile'); if (!el || !LH) return;
+    var b = LH[VS], name = VS.toUpperCase();
+    el.innerHTML = '<span class="k"><label for="vsSel">vs</label><select class="vsel" id="vsSel"><option value="spy"' + (VS === 'spy' ? ' selected' : '') + '>SPY</option><option value="qqq"' + (VS === 'qqq' ? ' selected' : '') + '>QQQ</option></select></span>' +
+      '<span class="v gold">' + (b == null ? '–' : pct(LH.book - b, 2)) + '</span><span class="sub">' + name + ' ' + pct(b, 2) + ' same period</span>';
+    $('vsSel').addEventListener('change', function (e) { VS = e.target.value; try { localStorage.setItem('lap_vs', VS); } catch (x) {} renderVs(); });
+  }
   function drawHist() {
-    if (tab !== 'history' || !HC || !HC.t || HC.t.length < 2) return;
-    var cv = $('histChart'), box = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; if (!box.width) return;
+    if (tab !== 'history') return;
+    var cv = $('histChart');
+    if (!HC || !HC.t || HC.t.length < 2) { var c0 = cv.getContext('2d'); c0.clearRect(0, 0, cv.width, cv.height); cv.parentNode.setAttribute('data-empty', 'Chart appears after the screener\u2019s next update'); return; }
+    cv.parentNode.removeAttribute('data-empty');
+    var box = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; if (!box.width) return;
     cv.width = box.width * dpr; cv.height = box.height * dpr; var g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, box.width, box.height);
     var W = box.width - 56, H = box.height - 26, S = [{ v: HC.spy, c: '#8d96a8', w: 1.6 }, { v: HC.qqq, c: '#5fb3a1', w: 1.6 }, { v: HC.book, c: '#c9a227', w: 2.4 }];
     var lo = 0, hi = 0; S.forEach(function (s) { s.v.forEach(function (x) { if (x != null) { lo = Math.min(lo, x); hi = Math.max(hi, x); } }); });
