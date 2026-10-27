@@ -279,7 +279,7 @@ nav a.navlink{display:inline-flex;align-items:center;padding:10px 14px;min-heigh
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var pct = function (v, d) { if (v == null || isNaN(v)) return '–'; d = d == null ? 1 : d; return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d) + '%'; };
   var cls = function (v) { return v > 0 ? 'up' : v < 0 ? 'dn' : ''; };
-  var API = 'https://fartpie.onrender.com';
+  var API = /(^|\.)degencap\.uk$|\.pages\.dev$/.test(location.hostname) ? '' : 'https://fartpie.onrender.com';   // same-origin /api (Pages Function proxy) -> first-party login cookie
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   function fetchRetry(u, opt, n) {
     n = n == null ? 4 : n;
